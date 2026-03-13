@@ -56,6 +56,12 @@ export default function Sidebar() {
     { path: "/admin/reports", icon: BarChart3, label: "Reports" },
     { path: "/admin/church", icon: Building, label: "Church Mgmt" },
     { path: "/admin/events", icon: CalendarDays, label: "Events" },
+    {
+      path: "/admin/ai",
+      icon: MessageCircle,
+      label: "AI Assistant",
+      badge: "AI",
+    },
   ];
 
   const treasurerNav = [

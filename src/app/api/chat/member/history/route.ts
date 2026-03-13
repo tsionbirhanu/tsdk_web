@@ -1,14 +1,27 @@
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
-  const supabase = createRouteHandlerClient({ cookies });
+  // Get the authorization token from the request
+  const token = req.headers.get("authorization")?.replace("Bearer ", "");
+
+  if (!token) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Create Supabase client with service role
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  );
+
+  // Verify the token and get user
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+    error: authError,
+  } = await supabase.auth.getUser(token);
 
-  if (!user) {
+  if (authError || !user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -22,12 +35,18 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Deduplicate sessions
-  const sessions = Array.from(new Set(data.map((s) => s.session_id))).map(
-    (id) => {
-      return data.find((s) => s.session_id === id);
+  // Deduplicate sessions and format response
+  const sessionMap = new Map();
+  data.forEach((s: any) => {
+    if (!sessionMap.has(s.session_id)) {
+      sessionMap.set(s.session_id, {
+        sessionId: s.session_id,
+        title: s.session_title || "Untitled Chat",
+        createdAt: s.created_at,
+      });
     }
-  );
+  });
 
-  return NextResponse.json(sessions);
+  const sessions = Array.from(sessionMap.values());
+  return NextResponse.json(sessions || []);
 }

@@ -31,16 +31,3 @@ export default function Providers({ children }: { children: ReactNode }) {
     </QueryClientProvider>
   );
 }
-          <ChatProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              {children}
-              <ChatAssistant />
-            </TooltipProvider>
-          </ChatProvider>
-        </AuthProvider>
-      </I18nProvider>
-    </QueryClientProvider>
-  );
-}

@@ -1,14 +1,24 @@
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
-  const supabase = createRouteHandlerClient({ cookies });
+  const token = req.headers.get("authorization")?.replace("Bearer ", "");
+
+  if (!token) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  );
+
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+    error: authError,
+  } = await supabase.auth.getUser(token);
 
-  if (!user) {
+  if (authError || !user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -50,7 +60,7 @@ export async function GET(req: NextRequest) {
     console.error("Error fetching treasurer history:", error);
     return NextResponse.json(
       { error: "Failed to fetch history" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

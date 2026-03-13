@@ -24,13 +24,30 @@ const AuthPage = () => {
 
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         if (error) throw error;
         toast.success("Welcome back!");
-        router.push("/dashboard");
+
+        if (data.user) {
+          const { data: roleData } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", data.user.id);
+
+          const userRoles = roleData?.map((r) => r.role) || [];
+          if (userRoles.includes("admin")) {
+            router.push("/admin");
+          } else if (userRoles.includes("treasurer")) {
+            router.push("/treasurer");
+          } else {
+            router.push("/dashboard");
+          }
+        } else {
+          router.push("/dashboard");
+        }
       } else {
         const { error } = await supabase.auth.signUp({
           email,
@@ -68,7 +85,8 @@ const AuthPage = () => {
             Tsedk
           </h1>
           <p className="text-lg text-muted-foreground mt-3 text-center max-w-md">
-            Ethiopian Orthodox Church Member Portal
+            Digital Platform for Managing Orthodox Donations, Aserat Bekurat,
+            Selet, and Gbir with Transparency
           </p>
         </div>
       </div>

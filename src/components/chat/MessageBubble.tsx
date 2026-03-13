@@ -6,15 +6,16 @@ import { Copy, Check } from "lucide-react";
 import { useState } from "react";
 
 interface MessageBubbleProps {
-  message: ChatMessage;
+  role: "user" | "assistant";
+  content: string;
 }
 
-export function MessageBubble({ message }: MessageBubbleProps) {
+export function MessageBubble({ role, content }: MessageBubbleProps) {
   const [copied, setCopied] = useState(false);
-  const isUser = message.role === "user";
+  const isUser = role === "user";
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(message.content);
+    navigator.clipboard.writeText(content);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -28,9 +29,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
             ? "bg-[#1E40AF] text-white rounded-br-none"
             : "bg-[#333333] text-[#E8E8E8] rounded-bl-none"
         }`}>
-        <p className="text-sm break-words whitespace-pre-wrap">
-          {message.content}
-        </p>
+        <p className="text-sm break-words whitespace-pre-wrap">{content}</p>
         {!isUser && (
           <button
             onClick={handleCopy}

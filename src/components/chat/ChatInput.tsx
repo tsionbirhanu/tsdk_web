@@ -9,10 +9,7 @@ interface ChatInputProps {
   disabled?: boolean;
 }
 
-export function ChatInput({
-  onSendMessage,
-  disabled = false,
-}: ChatInputProps) {
+export function ChatInput({ onSendMessage, disabled = false }: ChatInputProps) {
   const [input, setInput] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -44,16 +41,6 @@ export function ChatInput({
       <Button type="submit" size="icon" disabled={disabled || !input.trim()}>
         <Send size={18} />
       </Button>
-    </form>
-  );
-}
-      />
-      <button
-        type="submit"
-        disabled={disabled || !input.trim()}
-        className="px-3 py-2 bg-[#1E40AF] hover:bg-[#1E3EA8] disabled:bg-[#555555] text-white rounded-lg transition-colors disabled:cursor-not-allowed flex items-center justify-center">
-        <Send size={18} />
-      </button>
     </form>
   );
 }

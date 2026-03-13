@@ -20,7 +20,7 @@ export function FloatingChatPanel() {
     isLoading,
     error,
   } = useChat();
-  const { hasRole } = useAuth();
+  const { hasRole, user } = useAuth();
   const [showHistory, setShowHistory] = useState(false);
 
   // Admin-specific state to toggle between chat and caption generator
@@ -37,18 +37,21 @@ export function FloatingChatPanel() {
     }
   };
 
+  const isTreasurer = hasRole("treasurer");
   const title = isAdmin
     ? "Admin Assistant"
-    : hasRole("treasurer")
+    : isTreasurer
       ? "Treasurer AI"
-      : "Tsedek AI";
+      : "TSEDK AI";
   const subtitle = isAdmin
     ? adminView === "caption"
       ? "Caption Generator"
       : "Support Assistant"
-    : hasRole("guest")
-      ? "Limited access"
-      : "Your personal assistant";
+    : isTreasurer
+      ? "Financial Assistant"
+      : !user
+        ? "Limited access"
+        : "Your personal assistant";
 
   return (
     <div
@@ -134,7 +137,7 @@ export function FloatingChatPanel() {
                   error={error}
                 />
               ) : (
-                <CaptionGenerator onClose={() => setIsOpen(false)} />
+                <CaptionGenerator />
               )}
             </>
           ) : (

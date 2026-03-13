@@ -74,7 +74,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const hasRole = (role: AppRole) => roles.includes(role);
+  const hasRole = (role: AppRole) => {
+    if (role === "member") return !!user;
+    return roles.includes(role);
+  };
 
   const signOut = async () => {
     await supabase.auth.signOut();

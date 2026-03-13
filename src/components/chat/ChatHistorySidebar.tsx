@@ -60,34 +60,3 @@ export function ChatHistorySidebar({
     </aside>
   );
 }
-                      ? "bg-[#2F2F2F] text-white"
-                      : "text-[#AAAAAA] hover:bg-[#262626] hover:text-[#E8E8E8]"
-                  }`}
-                  title={conv.title}>
-                  {conv.title}
-                </button>
-                <div className="px-3 py-1 text-xs text-[#666666]">
-                  {format(new Date(conv.updatedAt), "MMM d, HH:mm")}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Delete All Button */}
-      {conversations.length > 0 && (
-        <div className="border-t border-[#2F2F2F] p-3">
-          <button
-            onClick={() => {
-              conversations.forEach((conv) => deleteConversation(conv.id));
-            }}
-            className="w-full px-3 py-2 text-xs text-[#FF6B6B] hover:bg-[#2F2F2F] rounded-md transition-colors flex items-center justify-center gap-2">
-            <Trash2 size={14} />
-            Clear All
-          </button>
-        </div>
-      )}
-    </aside>
-  );
-}

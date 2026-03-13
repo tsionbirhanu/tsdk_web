@@ -7,7 +7,7 @@ import React, {
   ReactNode,
   useEffect,
   useCallback,
-} from "use-client";
+} from "react";
 import { useAuth } from "@/hooks/useAuth"; // Assuming useAuth provides the user role
 
 export interface ChatMessage {
@@ -42,7 +42,7 @@ interface ChatContextType {
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
 export function ChatProvider({ children }: { children: ReactNode }) {
-  const { user, hasRole } = useAuth();
+  const { user, session, hasRole } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [history, setHistory] = useState<ChatSession[]>([]);
@@ -51,6 +51,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     [],
   );
   const [error, setError] = useState<string | null>(null);
+  const [guestMessageCount, setGuestMessageCount] = useState(0);
 
   const getApiEndpoints = useCallback(() => {
     if (hasRole("admin")) {
@@ -82,16 +83,35 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
     setIsLoading(true);
     try {
-      const response = await fetch(endpoints.history);
-      if (!response.ok) throw new Error("Failed to fetch history");
-      const data: ChatSession[] = await response.json();
-      setHistory(data);
+      const headers: any = {};
+      // Add authorization header if user is authenticated
+      if (session?.access_token) {
+        headers.Authorization = `Bearer ${session.access_token}`;
+      }
+
+      const response = await fetch(endpoints.history, { headers });
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("History fetch error:", response.status, errorText);
+        throw new Error(`Failed to fetch history: ${response.status}`);
+      }
+
+      const text = await response.text();
+      if (!text) {
+        setHistory([]);
+        return;
+      }
+
+      const data: ChatSession[] = JSON.parse(text);
+      setHistory(Array.isArray(data) ? data : []);
     } catch (e: any) {
-      setError(e.message);
+      console.error("Error fetching history:", e);
+      setHistory([]);
+      setError(null); // Don't show error to user for history fetch
     } finally {
       setIsLoading(false);
     }
-  }, [getApiEndpoints]);
+  }, [getApiEndpoints, session]);
 
   useEffect(() => {
     if (user) {
@@ -107,6 +127,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const startNewChat = () => {
     setActiveSessionId(null);
     setActiveConversation([]);
+    setGuestMessageCount(0);
     setIsOpen(true);
   };
 
@@ -135,26 +156,68 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     setActiveConversation((prev) => [...prev, newMessage]);
 
     try {
+      const headers: any = { "Content-Type": "application/json" };
+      // Add authorization header if user is authenticated
+      if (session?.access_token) {
+        headers.Authorization = `Bearer ${session.access_token}`;
+      }
+
+      const isGuest = !user && endpoints.chat === "/api/chat/guest";
+      const payload: any = { message };
+
+      if (isGuest) {
+        // For guests, send the message count
+        payload.sessionMessageCount = guestMessageCount;
+      } else {
+        // For authenticated users, send the session ID
+        payload.sessionId = activeSessionId;
+      }
+
       const response = await fetch(endpoints.chat, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message,
-          sessionId: activeSessionId,
-        }),
+        headers,
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || "API request failed");
+        const errorText = await response.text();
+        let errorMsg = "Sign in for more";
+        try {
+          const err = JSON.parse(errorText);
+          errorMsg = err.error || errorMsg;
+        } catch {
+          errorMsg = errorText || errorMsg;
+        }
+        throw new Error(errorMsg);
       }
 
-      const { reply, sessionId: newSessionId } = await response.json();
+      const text = await response.text();
+      if (!text) {
+        throw new Error("Empty response from server");
+      }
+
+      const responseData = JSON.parse(text);
+
+      // Check if guest limit reached
+      if (isGuest && responseData.limitReached) {
+        setError(responseData.message);
+        setActiveConversation((prev) =>
+          prev.filter((m) => m.content !== message),
+        );
+        setIsLoading(false);
+        return;
+      }
+
+      const { reply, sessionId: newSessionId } = responseData;
       const assistantMessage: ChatMessage = {
         role: "assistant",
         content: reply,
       };
       setActiveConversation((prev) => [...prev, assistantMessage]);
+
+      if (isGuest) {
+        setGuestMessageCount((prev) => prev + 1);
+      }
 
       if (newSessionId && !activeSessionId) {
         setActiveSessionId(newSessionId);
@@ -174,23 +237,56 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const generateCaptions = async (campaignId: string) => {
     if (!hasRole("admin")) {
       setError("Only admins can generate captions.");
-      return;
+      return null;
     }
     const endpoints = getApiEndpoints();
-    if (!endpoints.caption) return;
+    if (!endpoints.caption) {
+      setError("Caption endpoint not available.");
+      return null;
+    }
 
     setIsLoading(true);
+    setError(null);
     try {
+      const headers: any = { "Content-Type": "application/json" };
+      // Add authorization header if user is authenticated
+      if (session?.access_token) {
+        headers.Authorization = `Bearer ${session.access_token}`;
+      }
+
       const response = await fetch(endpoints.caption, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ campaignId }),
       });
-      if (!response.ok) throw new Error("Failed to generate captions");
-      const data = await response.json();
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorMsg = "Failed to generate captions";
+        try {
+          const err = JSON.parse(errorText);
+          errorMsg = err.error || errorMsg;
+        } catch {
+          errorMsg = errorText || "Failed to generate captions";
+        }
+        setError(errorMsg);
+        return null;
+      }
+
+      const text = await response.text();
+      if (!text) {
+        const msg = "Empty response from server";
+        setError(msg);
+        return null;
+      }
+
+      const data = JSON.parse(text);
+      setError(null);
       return data;
     } catch (e: any) {
-      setError(e.message);
+      const errorMsg = e.message || "Failed to generate captions";
+      setError(errorMsg);
+      console.error("Caption generation error:", e);
+      return null;
     } finally {
       setIsLoading(false);
     }
@@ -219,46 +315,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 export function useChat() {
   const context = useContext(ChatContext);
   if (context === undefined) {
-    throw new Error("useChat must be used within a ChatProvider");
-  }
-  return context;
-}
-
-    setConversations((prev) => prev.filter((c) => c.id !== id));
-    if (currentConversationId === id) {
-      setCurrentConversationId(null);
-    }
-  };
-
-  const startNewChat = () => {
-    const type = getCurrentConversation()?.type || ("general" as const);
-    createConversation(type);
-  };
-
-  return (
-    <ChatContext.Provider
-      value={{
-        conversations,
-        currentConversationId,
-        isOpen,
-        loading,
-        createConversation,
-        setCurrentConversation: setCurrentConv,
-        getCurrentConversation,
-        addMessage,
-        setIsOpen,
-        setLoading,
-        deleteConversation,
-        startNewChat,
-      }}>
-      {children}
-    </ChatContext.Provider>
-  );
-}
-
-export function useChat() {
-  const context = useContext(ChatContext);
-  if (!context) {
     throw new Error("useChat must be used within a ChatProvider");
   }
   return context;

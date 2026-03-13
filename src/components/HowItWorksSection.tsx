@@ -75,7 +75,7 @@ const itemVariants = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.6, ease: "easeOut" },
+    transition: { duration: 0.6 } as any,
   },
 };
 
@@ -117,7 +117,12 @@ const HowItWorksSection = () => {
               className="h-full bg-[#8b5829] origin-left"
               initial={{ scaleX: 0 }}
               animate={isInView ? { scaleX: 1 } : { scaleX: 0 }}
-              transition={{ duration: 0.7, delay: 0.3, ease: "easeOut" }}
+              transition={{
+                duration: 0.7,
+                delay: 0.3,
+                type: "spring",
+                stiffness: 100,
+              }}
             />
           </div>
 

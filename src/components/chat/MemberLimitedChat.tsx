@@ -20,7 +20,7 @@ export function MemberLimitedChat({
   isLoading,
   error,
 }: MemberLimitedChatProps) {
-  const { user } = useAuth();
+  const { user, hasRole } = useAuth();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -30,21 +30,29 @@ export function MemberLimitedChat({
   }, [messages]);
 
   const isGuest = !user;
+  const isTreasurer = hasRole("treasurer");
+  const isAdmin = hasRole("admin");
+
+  const getWelcomeMessage = () => {
+    if (isGuest) {
+      return "As a guest, you can ask general questions about TSEDK. Send up to 2 messages.";
+    }
+    if (isTreasurer) {
+      return "I have access to your financial data. Ask about campaign progress, donations, Aserat, Gbir, Selet, and member payments.";
+    }
+    if (isAdmin) {
+      return "You can ask questions about TSEDK or use the Caption Generator tab to create social media content.";
+    }
+    return "Ask me anything about TSEDK, our mission, or how to get involved.";
+  };
 
   return (
     <div className="flex h-full flex-col">
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 && !isLoading && (
           <div className="text-center text-sm text-gray-400">
-            <p className="font-semibold text-gray-300">Welcome to Tsedek AI</p>
-            {isGuest && (
-              <p className="mt-1">
-                As a guest, you can send up to 2 messages.
-              </p>
-            )}
-            <p className="mt-1">
-              Ask me anything about TSEDK, our mission, or how to get involved.
-            </p>
+            <p className="font-semibold text-gray-300">Welcome to TSEDK AI</p>
+            <p className="mt-2">{getWelcomeMessage()}</p>
           </div>
         )}
         {messages.map((msg, index) => (
@@ -71,80 +79,6 @@ export function MemberLimitedChat({
           </p>
         )}
       </div>
-    </div>
-  );
-}
-      };
-      addMessage(currentConversationId, aiMessage);
-    } catch (error) {
-      // Add error message
-      const errorMessage: ChatMessage = {
-        id: `msg_${Date.now()}_error`,
-        role: "assistant",
-        content:
-          error instanceof Error
-            ? error.message
-            : "Sorry, I encountered an error. Please try again.",
-        timestamp: new Date(),
-      };
-      addMessage(currentConversationId, errorMessage);
-    } finally {
-      setProcessingMessage(false);
-      setLoading(false);
-    }
-  };
-
-  if (!conversation) {
-    return (
-      <div className="flex items-center justify-center h-full text-[#888888]">
-        Start a conversation
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex flex-col h-full bg-[#1F1F1F]">
-      {/* Scope Information */}
-      <div className="border-b border-[#2F2F2F] bg-[#252525] px-4 py-3 text-xs text-[#AAAAAA]">
-        <p className="font-semibold text-[#E8E8E8] mb-1">I can help with:</p>
-        <p>{MEMBER_CHAT_SCOPE.join(", ")}</p>
-      </div>
-
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4">
-        {conversation.messages.length === 0 ? (
-          <div className="text-center text-[#888888] py-8">
-            <p className="text-sm">
-              Start by asking about {MEMBER_CHAT_SCOPE[0] || "our services"}.
-            </p>
-          </div>
-        ) : (
-          conversation.messages.map((msg) => (
-            <MessageBubble key={msg.id} message={msg} />
-          ))
-        )}
-        {processingMessage && (
-          <div className="flex gap-3 mb-3">
-            <div className="max-w-xs px-4 py-3 rounded-lg bg-[#333333] text-[#E8E8E8] rounded-bl-none">
-              <div className="flex gap-1">
-                <span className="w-2 h-2 bg-[#7B8EFF] rounded-full animate-bounce"></span>
-                <span
-                  className="w-2 h-2 bg-[#7B8EFF] rounded-full animate-bounce"
-                  style={{ animationDelay: "0.2s" }}></span>
-                <span
-                  className="w-2 h-2 bg-[#7B8EFF] rounded-full animate-bounce"
-                  style={{ animationDelay: "0.4s" }}></span>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Input */}
-      <ChatInput
-        onSend={handleSendMessage}
-        disabled={processingMessage || loading}
-      />
     </div>
   );
 }

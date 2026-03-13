@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     // Primary path: Google Gemini API directly
     if (geminiKey) {
       const contents: GeminiMessage[] = (
-        messages as { role: string; content: string }[]
+        (messages || []) as { role: string; content: string }[]
       )
         .filter((m) => m.role !== "system")
         .map((m) => ({
@@ -149,8 +149,12 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
+    console.error("Chat API Error:", error);
     return new Response(
-      JSON.stringify({ error: "Failed to process chat request" }),
+      JSON.stringify({
+        error: "Failed to process chat request",
+        details: String(error),
+      }),
       { status: 500, headers: { "Content-Type": "application/json" } },
     );
   }

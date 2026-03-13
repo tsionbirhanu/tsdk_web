@@ -38,7 +38,7 @@ const AseratPage = () => {
   const handlePay = async () => {
     if (!user) { toast.error("Please sign in"); return; }
     if (titheAmount <= 0) return;
-    if (!receiptFile) { toast.error(lang === "am" ? "áŠ¥á‰£áŠ­á‹Ž á‹¨áŠ­áá‹« áˆµáŠ­áˆªáŠ•áˆ¾á‰µ á‹«áˆµáŒˆá‰¡" : "Please upload payment receipt"); return; }
+    if (!receiptFile) { toast.error(lang === "am" ? "እባኮን የክፊያ ደረሰኝ ያስገቡ" : "Please upload payment receipt"); return; }
 
     setSubmitting(true);
     try {
@@ -58,7 +58,7 @@ const AseratPage = () => {
       });
       if (error) throw error;
       setSubmitted(true);
-      toast.success(lang === "am" ? "á‹“áˆ¥áˆ«á‰µ á‰°áˆáŠ³áˆ!" : "Aserat submitted!");
+      toast.success(lang === "am" ? "አስራት ገብቷል!" : "Aserat submitted!");
       refetch();
     } catch (err: any) {
       toast.error(err.message);
@@ -79,9 +79,9 @@ const AseratPage = () => {
         <AppHeader title={t("aserat.title")} />
         <div className="flex flex-col items-center justify-center h-[50vh] animate-fade-in px-4">
           <div className="p-4 rounded-full bg-primary/20 mb-4"><CheckCircle className="w-12 h-12 text-primary" /></div>
-          <h2 className="text-xl font-heading font-bold text-foreground mb-2">{lang === "am" ? "á‹“áˆ¥áˆ«á‰µ á‰°áˆáŠ³áˆ!" : "Aserat Submitted!"}</h2>
-          <p className="text-sm text-muted-foreground text-center mb-6">{lang === "am" ? "áˆ²áˆ¨áŒ‹áŒˆáŒ¥ áˆ›áˆ³á‹ˆá‰‚á‹« á‹­á‹°áˆ­áˆµá‹Žá‰³áˆ" : "You'll be notified once verified."}</p>
-          <Button onClick={resetForm} className="rounded-xl">{lang === "am" ? "áˆŒáˆ‹ á‹­áŠ­áˆáˆ‰" : "Pay Another"}</Button>
+          <h2 className="text-xl font-heading font-bold text-foreground mb-2">{lang === "am" ? "አስራት ገብቷል!" : "Aserat Submitted!"}</h2>
+          <p className="text-sm text-muted-foreground text-center mb-6">{lang === "am" ? "የማሳወቂያ መልክት ይደርሶታል" : "You'll be notified once verified."}</p>
+          <Button onClick={resetForm} className="rounded-xl">{lang === "am" ? "ለላ ለመክፈል" : "Pay Another"}</Button>
         </div>
       </div>
     );
@@ -122,14 +122,14 @@ const AseratPage = () => {
             ) : (
               <button onClick={() => fileInputRef.current?.click()} className="w-full border-2 border-dashed border-border rounded-xl p-4 flex flex-col items-center gap-2 hover:border-primary/40 transition-colors">
                 <Upload className="w-6 h-6 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">{lang === "am" ? "á‹¨áŠ­áá‹« áˆµáŠ­áˆªáŠ•áˆ¾á‰µ á‹«áˆµáŒˆá‰¡" : "Upload payment screenshot"}</span>
+                <span className="text-sm text-muted-foreground">{lang === "am" ? "" : "Upload payment screenshot"}</span>
               </button>
             )}
 
             <Button onClick={handlePay} disabled={titheAmount === 0 || !receiptFile || submitting}
               className="w-full py-6 text-base font-semibold rounded-xl bg-primary text-primary-foreground border-0 gold-glow disabled:opacity-40">
               {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-              {submitting ? (lang === "am" ? "á‰ áˆ˜áˆ‹áŠ­ áˆ‹á‹­..." : "Submitting...") : t("aserat.pay")}
+              {submitting ? (lang === "am" ? "በመግባት ላይ­..." : "Submitting...") : t("aserat.pay")}
             </Button>
           </div>
         </div>

@@ -1,5 +1,5 @@
-import TreasurerAIScreen from "@/screens/treasurer/TreasurerAI";
+import TreasurerAIPage from "@/screens/TreasurerAIPage";
 
-export default function TreasurerAIPage() {
-  return <TreasurerAIScreen />;
+export default function Page() {
+  return <TreasurerAIPage />;
 }

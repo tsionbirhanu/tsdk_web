@@ -108,7 +108,7 @@ const AiChatPage = () => {
       role: "assistant",
       content:
         lang === "am"
-          ? "áˆ°áˆ‹áˆ! á‹¨á‰¤á‰°áŠ­áˆ­áˆµá‰²á‹«áŠ• AI áˆ¨á‹³á‰µ áŠáŠá¢ áˆµáˆˆ áŠ áŒˆáˆáŒáˆŽá‰¶á‰½á£ áˆáŒˆáˆ³ á‹ˆá‹­áˆ áˆµáˆˆ áˆ›áŠ•áŠ›á‹áˆ áŠáŒˆáˆ­ á‹­áŒ á‹­á‰áŠá¢"
+          ? "እንኳን ደህና መጡ! እኔ የቤተክርስቲያን አገልጋይ ነኝ። ስለ አገልግሎቶች፣ ድጋፍ፣ ወይም ሌላ ማንኛውም ነገር ይጠይቁኝ።"
           : lang === "om"
             ? "Nagaa! Gargaaraa waldaa keenya. Waa'ee tajaajila, arjoomaa, ykn waan kamiyyuu na gaafadhaa."
             : "Peace be with you! I'm your church assistant. Ask me about services, donations, or anything else.",
@@ -161,12 +161,12 @@ const AiChatPage = () => {
 
   const suggestions = [
     lang === "am"
-      ? "á‹¨áŒ¸áˆŽá‰µ áŒŠá‹œ áˆ˜á‰¼ áŠá‹?"
+      ? "የ ጸሎት ሰአት?"
       : "When are prayer times?",
     lang === "am"
-      ? "áŠ¥áŠ•á‹´á‰µ áˆáˆˆáŒáˆµ áŠ¥á‰½áˆ‹áˆˆáˆ?"
+      ? "እንደት መርዳት እችላለሁ?"
       : "How can I donate?",
-    lang === "am" ? "á‹¨á‰ á‹“áˆ‹á‰µ á‰€áŠ“á‰µ" : "Upcoming holidays",
+    lang === "am" ? "በአላት" : "Upcoming holidays",
   ];
 
   return (
@@ -183,7 +183,7 @@ const AiChatPage = () => {
               </h1>
               <p className="text-sm text-muted-foreground">
                 {lang === "am"
-                  ? "á‹¨á‰¤á‰°áŠ­áˆ­áˆµá‰²á‹«áŠ• AI áˆ¨á‹³á‰µ"
+                  ? "የናንተው ቤተክርስቲያን አገልጋይ"
                   : "Your Church AI Assistant"}
               </p>
             </div>
