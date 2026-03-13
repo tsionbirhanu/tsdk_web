@@ -64,10 +64,39 @@ const AdminMembers = () => {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this member? This will also delete their user account.")) return;
-    const { error } = await supabase.from("profiles").delete().eq("id", id);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Member deleted");
-    fetchMembers();
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      const token = session?.access_token;
+      if (!token) {
+        toast.error("Unable to authenticate. Please sign in again.");
+        return;
+      }
+
+      const res = await fetch(`/api/admin/delete-member`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ profileId: id }),
+      });
+
+      const json = await res.json();
+      if (!res.ok) {
+        toast.error(json?.error || "Failed to delete member");
+        return;
+      }
+
+      toast.success("Member deleted");
+      fetchMembers();
+    } catch (err: any) {
+      console.error("Delete member error:", err);
+      toast.error(err?.message || "Failed to delete member");
+    }
   };
 
   return (

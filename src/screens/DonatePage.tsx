@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import AppHeader from "@/components/AppHeader";
 import { useI18n } from "@/lib/i18n";
 import { Search, Heart } from "lucide-react";
-import { useState } from "react";
+import React, { useState } from "react";
+import PaymentCard from "@/components/PaymentCard";
 
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,12 +26,26 @@ const DonatePage = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("campaigns")
-        .select("*")
-        .eq("status", "active")
+        .select("id, title, title_am, title_om, goal_amount, raised_amount, status, category, created_at, updated_at")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      return data || [];
     },
+  });
+
+  // derive real status: complete if raised >= goal, paused if DB status paused, else active
+  const campaignsWithStatus = (campaigns as any[]).map((c) => {
+    const goal = Number(c.goal_amount || 0);
+    const raised = Number(c.raised_amount || 0);
+    let realStatus = c.status || "active";
+
+    if (goal > 0 && raised >= goal) {
+      realStatus = "complete";
+    }
+
+    if (c.status === "paused") realStatus = "paused";
+
+    return { ...c, realStatus };
   });
 
   const filtered = campaigns.filter((c) => {
@@ -48,6 +63,8 @@ const DonatePage = () => {
     if (lang === "om" && c.title_om) return c.title_om;
     return c.title;
   };
+
+  const [showPaymentId, setShowPaymentId] = useState<string | null>(null);
 
   return (
     <div>
@@ -94,27 +111,70 @@ const DonatePage = () => {
             {!isLoading && filtered.length === 0 && (
               <p className="text-center text-sm text-muted-foreground py-8">No campaigns found</p>
             )}
-            {filtered.map((campaign) => (
-              <button
-                key={campaign.id}
-                onClick={() => router.push(`/donate/${campaign.id}`)}
-                className="w-full glass-card rounded-xl p-4 text-left transition-all hover:gold-glow active:scale-[0.99]"
-              >
-                <h3 className="font-heading font-semibold text-foreground text-sm">{getTitle(campaign)}</h3>
-                {lang !== "en" && <p className="text-xs text-muted-foreground mt-0.5">{campaign.title}</p>}
-                <div className="mt-3">
-                  <Progress value={Number(campaign.goal_amount) > 0 ? (Number(campaign.raised_amount) / Number(campaign.goal_amount)) * 100 : 0} className="h-2" />
-                  <div className="flex justify-between mt-1.5">
-                    <span className="text-xs text-primary font-semibold">
-                      {(Number(campaign.raised_amount) / 1000).toFixed(0)}K {t("donate.raised")}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {(Number(campaign.goal_amount) / 1000).toFixed(0)}K {t("donate.goal")}
-                    </span>
+            {filtered.map((campaign) => {
+              const c = campaignsWithStatus.find((x: any) => x.id === campaign.id) || campaign;
+              const statusLabel = c.realStatus === "complete" ? "Complete" : c.realStatus === "paused" ? "Paused" : "Active";
+              const disabled = statusLabel !== "Active";
+
+              return (
+                <React.Fragment key={campaign.id}>
+                  <div
+                    onClick={() => {
+                      if (!disabled) router.push(`/donate/${campaign.id}`);
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    className={`w-full glass-card rounded-xl p-4 text-left transition-all ${disabled ? "opacity-80 cursor-not-allowed" : "hover:gold-glow active:scale-[0.99]"}`}>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h3 className="font-heading font-semibold text-foreground text-sm">{getTitle(campaign)}</h3>
+                        {lang !== "en" && <p className="text-xs text-muted-foreground mt-0.5">{campaign.title}</p>}
+                        <div className="mt-3">
+                          <Progress value={Number(campaign.goal_amount) > 0 ? (Number(campaign.raised_amount) / Number(campaign.goal_amount)) * 100 : 0} className="h-2" />
+                          <div className="flex justify-between mt-1.5">
+                            <span className="text-xs text-primary font-semibold">
+                              {(Number(campaign.raised_amount) / 1000).toFixed(0)}K {t("donate.raised")}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {(Number(campaign.goal_amount) / 1000).toFixed(0)}K {t("donate.goal")}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="ml-4 flex flex-col items-end gap-2">
+                        <span className={`text-xs px-2 py-1 rounded ${statusLabel === "Active" ? "bg-primary/10 text-primary" : statusLabel === "Paused" ? "bg-muted/20 text-muted-foreground" : "bg-success/10 text-success"}`}>
+                          {statusLabel}
+                        </span>
+                        <div className="flex flex-col gap-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (!disabled) setShowPaymentId((id) => (id === campaign.id ? null : campaign.id));
+                            }}
+                            disabled={disabled}
+                            className={`px-3 py-1 rounded text-sm ${disabled ? "bg-muted/20 text-muted-foreground cursor-not-allowed" : "bg-primary text-primary-foreground hover:opacity-90"}`}>
+                            {disabled ? t("donate.noMoreDonate") || "No more donate" : t("Donate") || "Pay Now"}
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (!disabled) router.push(`/donate/${campaign.id}`);
+                            }}
+                            className="text-xs text-muted-foreground hover:underline">
+                            {t("View Details")}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </button>
-            ))}
+                  {showPaymentId === campaign.id && (
+                    <div className="mt-3">
+                      <PaymentCard campaignId={campaign.id} defaultAmount={Number(campaign.goal_amount) > 0 ? Math.min(Number(campaign.goal_amount), 100) : 100} />
+                    </div>
+                  )}
+                </React.Fragment>
+              );
+            })}
           </div>
         </div>
       </div>
