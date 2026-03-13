@@ -179,9 +179,8 @@ const AdminCampaigns = () => {
         <div className="glass-card rounded-xl p-6 space-y-4">
           <h3 className="font-heading font-semibold text-foreground">{editingId ? "Edit Campaign" : "Create Campaign"}</h3>
           <div className="grid sm:grid-cols-2 gap-4">
-            <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Title (English)" className="px-4 py-2.5 rounded-lg bg-secondary border border-border text-sm text-foreground placeholder:text-muted-foreground" />
-            <input value={form.title_am} onChange={(e) => setForm({ ...form, title_am: e.target.value })} placeholder="áˆ­á‹•áˆµ (áŠ áˆ›áˆ­áŠ›)" className="px-4 py-2.5 rounded-lg bg-secondary border border-border text-sm text-foreground placeholder:text-muted-foreground" />
-            <input value={form.title_om} onChange={(e) => setForm({ ...form, title_om: e.target.value })} placeholder="Mata Duree (Oromiffa)" className="px-4 py-2.5 rounded-lg bg-secondary border border-border text-sm text-foreground placeholder:text-muted-foreground" />
+            <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Title" className="px-4 py-2.5 rounded-lg bg-secondary border border-border text-sm text-foreground placeholder:text-muted-foreground" />
+            
             <input value={form.goal_amount} onChange={(e) => setForm({ ...form, goal_amount: e.target.value })} placeholder="Goal Amount (ETB)" type="number" className="px-4 py-2.5 rounded-lg bg-secondary border border-border text-sm text-foreground placeholder:text-muted-foreground" />
             <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="px-4 py-2.5 rounded-lg bg-secondary border border-border text-sm text-foreground">
               <option value="general">General</option>

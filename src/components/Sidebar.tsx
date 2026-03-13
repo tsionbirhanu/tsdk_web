@@ -92,8 +92,8 @@ export default function Sidebar() {
             href={item.path}
             className={`flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg transition-all text-sm ${
               isActive
-                ? "bg-primary text-primary-foreground gold-glow"
-                : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                ? "bg-sidebar-primary text-sidebar-foreground gold-glow"
+                : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
             }`}>
             <Icon className="w-4 h-4 flex-shrink-0" />
             <span className="font-medium truncate">{item.label}</span>
@@ -109,9 +109,9 @@ export default function Sidebar() {
   );
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-60 bg-card border-r border-border flex flex-col z-50">
+    <aside className="fixed left-0 top-0 h-screen w-60 bg-sidebar border-r border-sidebar-border flex flex-col z-50">
       {/* Logo */}
-      <div className="p-5 border-b border-border">
+      <div className="p-5 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg overflow-hidden gold-glow">
             <Image
@@ -123,8 +123,8 @@ export default function Sidebar() {
             />
           </div>
           <div>
-            <h1 className="font-heading font-bold text-foreground">Tsedk</h1>
-            <p className="text-[10px] text-muted-foreground">Member Portal</p>
+            <h1 className="font-heading font-bold text-sidebar-foreground">Tsedk</h1>
+            <p className="text-[10px] text-sidebar-foreground/60">Member Portal</p>
           </div>
         </div>
       </div>
@@ -133,18 +133,18 @@ export default function Sidebar() {
       <nav className="flex-1 py-4 overflow-y-auto">
         {isAdmin && renderNavSection("Administration", adminNav)}
         {isTreasurer && !isAdmin && renderNavSection("Treasury", treasurerNav)}
-        {isAdmin && renderNavSection("Treasury", treasurerNav)}
+        {/* {isAdmin && renderNavSection("Treasury", treasurerNav)} */}
         {!isAdmin && !isTreasurer && renderNavSection("Member", memberNav)}
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-border space-y-1">
+      <div className="p-4 border-t border-sidebar-border space-y-1">
         <Link
           href="/notifications"
           className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all text-sm ${
             pathname === "/notifications"
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+              ? "bg-sidebar-primary text-sidebar-foreground"
+              : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
           }`}>
           <Bell className="w-4 h-4" />
           <span className="font-medium">{t("nav.notifications")}</span>
@@ -153,8 +153,8 @@ export default function Sidebar() {
           href="/profile"
           className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all text-sm ${
             pathname === "/profile"
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+              ? "bg-sidebar-primary text-sidebar-foreground"
+              : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
           }`}>
           <User className="w-4 h-4" />
           <span className="font-medium">{t("nav.profile")}</span>
