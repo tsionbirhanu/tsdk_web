@@ -36,7 +36,9 @@ export async function GET(req: NextRequest) {
 
     const { data, error } = await supabase
       .from("campaigns")
-      .select("id, name")
+      // The campaigns table uses `title` instead of `name`.
+      // Include localized fields so the frontend can pick the right label.
+      .select("id, title, title_am, title_om, description, category, goal_amount, raised_amount, status, image_url")
       .order("created_at", { ascending: false });
 
     if (error) throw error;

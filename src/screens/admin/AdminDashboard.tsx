@@ -167,10 +167,10 @@ const AdminDashboard = () => {
           <div className="glass-card rounded-xl p-6">
             <h3 className="font-heading font-semibold text-foreground mb-4">Alerts</h3>
             <div className="space-y-3">
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-accent/10">
+              {/* <div className="flex items-start gap-3 p-3 rounded-lg bg-accent/10">
                 <AlertTriangle className="w-4 h-4 text-accent mt-0.5" />
                 <p className="text-xs text-foreground">3 pending payment verifications</p>
-              </div>
+              </div> */}
               <div className="flex items-start gap-3 p-3 rounded-lg bg-primary/10">
                 <AlertTriangle className="w-4 h-4 text-primary mt-0.5" />
                 <p className="text-xs text-foreground">5 members with overdue aserat</p>

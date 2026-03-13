@@ -42,8 +42,9 @@ export async function POST(req: NextRequest) {
       parts: [{ text: msg.content }],
     }));
 
+    const modelName = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: {
@@ -61,10 +62,22 @@ export async function POST(req: NextRequest) {
     );
 
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Gemini API error:", errorData);
+      const errorData = await response.json().catch(() => null);
+      console.error("Gemini API error:", errorData || response.statusText);
+
+      if (response.status === 429) {
+        return NextResponse.json(
+          {
+            error:
+              "Quota exceeded for Gemini API. Please check your Google Cloud quota/billing or try again later.",
+            details: errorData,
+          },
+          { status: 429 },
+        );
+      }
+
       return NextResponse.json(
-        { error: "Failed to get response from AI" },
+        { error: "Failed to get response from AI", details: errorData },
         { status: 500 },
       );
     }

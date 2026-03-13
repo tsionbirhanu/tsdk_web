@@ -11,8 +11,10 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, loading } = useAuth();
+  const { user, loading, roles } = useAuth();
   const router = useRouter();
+
+  const isEthiopianTheme = roles.includes('admin') || roles.includes('treasurer') || roles.includes('member');
 
   useEffect(() => {
     if (!loading && !user) {
@@ -31,7 +33,7 @@ export default function DashboardLayout({
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className={`min-h-screen bg-background flex ${isEthiopianTheme ? 'ethiopian-theme' : ''}`}>
       <Sidebar />
       <div className="flex-1 flex flex-col ml-60">
         <TopHeader />
