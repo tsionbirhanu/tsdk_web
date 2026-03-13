@@ -50,14 +50,30 @@ const Dashboard = () => {
   });
 
   const { data: campaigns = [] } = useQuery({
-    queryKey: ["active-campaigns"],
+    queryKey: ["campaigns"],
     queryFn: async () => {
       const { data } = await supabase
         .from("campaigns")
-        .select("*")
-        .eq("status", "active");
+        .select("id, title, goal_amount, raised_amount, status, created_at, updated_at");
       return data || [];
     },
+  });
+
+  // Derive a "real" status for each campaign based on raised vs goal and DB status
+  const campaignsWithStatus = (campaigns as any[]).map((c) => {
+    const goal = Number(c.goal_amount || 0);
+    const raised = Number(c.raised_amount || 0);
+    let realStatus = c.status || "active";
+
+    if (goal > 0 && raised >= goal) {
+      realStatus = "funded";
+    }
+
+    if (c.status && (c.status === "closed" || c.status === "archived")) {
+      realStatus = c.status;
+    }
+
+    return { ...c, realStatus };
   });
 
   const { data: selets = [] } = useQuery({
@@ -89,7 +105,7 @@ const Dashboard = () => {
     },
     {
       label: t("dash.campaigns"),
-      value: String(campaigns.length),
+      value: String(campaignsWithStatus.filter((c: any) => c.realStatus === "active").length),
       icon: TrendingUp,
       accent: "text-accent",
     },
@@ -229,6 +245,57 @@ const Dashboard = () => {
                       </div>
                     </div>
                   ))
+                )}
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-4 mt-6">
+                <h3 className="text-lg font-heading font-semibold text-foreground">
+                  {t("dash.campaigns")}
+                </h3>
+                <button
+                  onClick={() => router.push("/campaigns")}
+                  className="text-sm text-primary font-medium flex items-center gap-1 hover:underline">
+                  {t("common.viewAll")} <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="glass-card rounded-xl p-4 space-y-3">
+                {(campaignsWithStatus || []).slice(0, 5).map((c: any) => {
+                  const statusLabel = c.realStatus === "funded" || c.realStatus === "complete" || c.realStatus === "closed" || c.realStatus === "archived"
+                    ? "Complete"
+                    : c.realStatus === "paused"
+                      ? "Paused"
+                      : "Active";
+
+                  const disableDonate = statusLabel !== "Active";
+
+                  return (
+                    <div key={c.id} className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-foreground">{c.title}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {Number(c.raised_amount).toLocaleString()} / {Number(c.goal_amount).toLocaleString()} {t("common.birr")}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className={`text-xs px-2 py-1 rounded ${statusLabel === "Active" ? "bg-primary/10 text-primary" : statusLabel === "Paused" ? "bg-muted/20 text-muted-foreground" : "bg-success/10 text-success"}`}>
+                          {statusLabel}
+                        </span>
+                        <button
+                          onClick={() => router.push(`/campaigns/${c.id}`)}
+                          disabled={disableDonate}
+                          className={`px-3 py-1 rounded text-sm ${disableDonate ? "bg-muted/20 text-muted-foreground cursor-not-allowed" : "bg-primary text-primary-foreground hover:opacity-90"}`}>
+                          {disableDonate ? t("dash.noMoreDonate") || "No more donate" : t("nav.donate")}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {(campaignsWithStatus || []).length === 0 && (
+                  <div className="text-sm text-muted-foreground text-center p-4">No campaigns available</div>
                 )}
               </div>
             </div>
