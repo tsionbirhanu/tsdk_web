@@ -47,6 +47,20 @@ export default function PaymentCard({ campaignId, defaultAmount = 100 }: Props) 
 
   const presets = [100, 500, 1000, 5000];
 
+  // editable contact fields (fall back to profile/user)
+  const [emailInput, setEmailInput] = React.useState<string>(user?.email || profile?.email || "");
+  const [firstNameInput, setFirstNameInput] = React.useState<string>((profile?.full_name || "").split(" ")[0] || "");
+  const [lastNameInput, setLastNameInput] = React.useState<string>((profile?.full_name || "").split(" ").slice(1).join(" ") || "");
+
+  React.useEffect(() => {
+    // sync when profile loads
+    if (profile) {
+      setEmailInput(profile.email || user?.email || "");
+      setFirstNameInput((profile.full_name || "").split(" ")[0] || "");
+      setLastNameInput((profile.full_name || "").split(" ").slice(1).join(" ") || "");
+    }
+  }, [profile, user]);
+
   return (
     <div className="mt-3 p-4 bg-secondary rounded-md border border-border">
       <div className="mb-3">
@@ -87,13 +101,40 @@ export default function PaymentCard({ campaignId, defaultAmount = 100 }: Props) 
         </label>
       </div>
 
+      <div className="mb-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <input
+            type="email"
+            placeholder="Email"
+            value={emailInput}
+            onChange={(e) => setEmailInput(e.target.value)}
+            className="w-full px-3 py-2 rounded-md bg-background border border-border text-sm text-foreground"
+          />
+          <input
+            type="text"
+            placeholder="First name"
+            value={firstNameInput}
+            onChange={(e) => setFirstNameInput(e.target.value)}
+            className="w-full px-3 py-2 rounded-md bg-background border border-border text-sm text-foreground"
+          />
+          <input
+            type="text"
+            placeholder="Last name"
+            value={lastNameInput}
+            onChange={(e) => setLastNameInput(e.target.value)}
+            className="w-full px-3 py-2 rounded-md bg-background border border-border text-sm text-foreground"
+          />
+        </div>
+      </div>
+
       <div className="flex items-center justify-between">
         <div className="text-sm text-muted-foreground">Paying for campaign</div>
         <PaymentButton
           amount={amount}
-          email={user?.email || profile?.email || ""}
-          firstName={(profile?.full_name || "").split(" ")[0] || ""}
-          lastName={(profile?.full_name || "").split(" ").slice(1).join(" ") || ""}
+          email={emailInput}
+          firstName={firstNameInput}
+          lastName={lastNameInput}
+          disabled={!emailInput || !firstNameInput || !lastNameInput || Number(amount) <= 0}
         >
           Pay now
         </PaymentButton>
