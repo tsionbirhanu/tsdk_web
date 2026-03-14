@@ -3,6 +3,73 @@ import { NextRequest, NextResponse } from "next/server";
 
 const MEMBER_SYSTEM_PROMPT = `You are the TSEDK member assistant. You have access to church information and community resources. You may answer questions about: donation processes, campaigns, church events, community resources, and general TSEDK functionality. Respond in the same language (Amharic, Afan Oromo, or English). Keep responses helpful and relevant to the TSEDK platform.`;
 
+function isReligiousTopic(text: string) {
+  if (!text) return false;
+  const t = text.toLowerCase();
+  const keywords = [
+    // general religious/topic keywords
+    "bible",
+    "scripture",
+    "dogma",
+    "doctrine",
+    "theology",
+    "religion",
+    "religious",
+    "verse",
+    "verses",
+    "what does the bible",
+    "holy book",
+    "መጽሐፍ",
+    "kitaaba qulqulluu",
+    // common Bible characters (English)
+    "jesus",
+    "christ",
+    "jesus christ",
+    "moses",
+    "abraham",
+    "sarah",
+    "isaac",
+    "ishmael",
+    "jacob",
+    "joseph",
+    "mary",
+    "maryam",
+    "joseph",
+    "peter",
+    "paul",
+    "judas",
+    "john the baptist",
+    "john",
+    "matthew",
+    "mark",
+    "luke",
+    "david",
+    "solomon",
+    "samuel",
+    "saul",
+    "esther",
+    "ruth",
+    "ezekiel",
+    "daniel",
+    "elijah",
+    "elisha",
+    "isaiah",
+    "jonah",
+    // common transliterations / local names
+    "yesus",
+    "muusaa",
+    "abrahaam",
+    "mariyaam",
+    "ኢየሱስ",
+    "ሙሴ",
+    "አብርሃም",
+    "ማርያም",
+    "ዮሴፍ",
+  ];
+
+  return keywords.some((kw) => t.includes(kw));
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { message, sessionId: currentSessionId } = await req.json();
@@ -36,6 +103,34 @@ export async function POST(req: NextRequest) {
 
     const conversationHistory = history || [];
     conversationHistory.push({ role: "user", content: message });
+
+    // If the user asks about the Bible or religious dogma, refuse to answer here.
+    const allText = conversationHistory.map((m) => m.content).join(" \n ");
+    if (isReligiousTopic(allText)) {
+      const reply =
+        "I'm sorry, I can't assist with questions about the Bible or religious dogmas. I can help with church services, donations, events, and other TSEDK-related information.";
+
+      const sessionTitle =
+        conversationHistory.length === 1 ? message.substring(0, 40) : undefined;
+
+      await supabase.from("chat_history").insert([
+        {
+          user_id: user.id,
+          session_id: sessionId,
+          role: "user",
+          content: message,
+          session_title: sessionTitle,
+        },
+        {
+          user_id: user.id,
+          session_id: sessionId,
+          role: "assistant",
+          content: reply,
+        },
+      ]);
+
+      return NextResponse.json({ reply, sessionId });
+    }
 
     const contents = conversationHistory.map((msg) => ({
       role: msg.role === "user" ? "user" : "model",
