@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     const callback_url = body.callback_url || `${process.env.NEXT_PUBLIC_BASE_URL || ""}/api/payment/verify?tx_ref=${tx_ref}`;
     const return_url = body.return_url || `${process.env.NEXT_PUBLIC_BASE_URL || ""}/`;
 
-    if (!amount || !email || !first_name || !last_name) {
+    if (!email || !first_name || !last_name) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 

@@ -11,6 +11,7 @@ import {
   Calendar,
   CreditCard,
 } from "lucide-react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,7 +22,7 @@ import patternBg from "@/assets/pattern-bg.jpg";
 const Dashboard = () => {
   const { t } = useI18n();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, session } = useAuth();
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
@@ -88,6 +89,26 @@ const Dashboard = () => {
     },
     enabled: !!user,
   });
+
+  // Ensure deadline reminders are generated for this member
+  useEffect(() => {
+    if (!user?.id || !session?.access_token) return;
+
+    const checkDeadlines = async () => {
+      try {
+        await fetch("/api/notifications/check-deadlines", {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        });
+      } catch (error) {
+        // ignore errors; notifications are best-effort
+        console.error("Failed to check deadlines", error);
+      }
+    };
+
+    checkDeadlines();
+  }, [user?.id, session?.access_token]);
 
   const totalDonated = donations
     .filter((d: any) => d.status === "verified")
@@ -287,7 +308,7 @@ const Dashboard = () => {
                           onClick={() => router.push(`/campaigns/${c.id}`)}
                           disabled={disableDonate}
                           className={`px-3 py-1 rounded text-sm ${disableDonate ? "bg-muted/20 text-muted-foreground cursor-not-allowed" : "bg-primary text-primary-foreground hover:opacity-90"}`}>
-                          {disableDonate ? t("dash.noMoreDonate") || "No more donate" : t("nav.donate")}
+                          {disableDonate ? t("Closed") || "No more donate" : t("nav.donate")}
                         </button>
                       </div>
                     </div>
