@@ -32,7 +32,7 @@ const Dashboard = () => {
         .select("*")
         .eq("user_id", user!.id)
         .single();
-      return data;
+      return data; //
     },
     enabled: !!user,
   });
