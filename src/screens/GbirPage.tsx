@@ -16,7 +16,7 @@ const GBIR_AMOUNT = 2400;
 
 const GbirPage = () => {
   const { t, lang } = useI18n();
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -54,6 +54,29 @@ const GbirPage = () => {
     finally { setSubmitting(false); }
   };
 
+  const handleChapaGbir = async () => {
+    if (!user) { toast.error(lang === "am" ? "ማስተዋወቅ" : "Please sign in"); return; }
+    try {
+      const res = await fetch('/api/payment/initiate', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        body: JSON.stringify({ type: 'gbir', amount: GBIR_AMOUNT }),
+      });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        throw new Error(json?.error?.message || json?.error || 'Failed initiating payment');
+      }
+      const json = await res.json();
+      if (json.checkout_url) {
+        window.location.href = json.checkout_url;
+      } else {
+        toast.error('No checkout URL');
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Payment failed');
+    }
+  };
+
   return (
     <div>
       {/* <AppHeader title={t("gbir.title")} /> */}
@@ -84,11 +107,17 @@ const GbirPage = () => {
                     <Upload className="w-4 h-4" /> {lang === "am" ? "ማስረጃ" : "Upload receipt"}
                   </button>
                 )}
-                <Button onClick={handlePay} disabled={submitting || !receiptFile}
-                  className="bg-primary text-primary-foreground border-0 rounded-xl gold-glow disabled:opacity-40">
-                  {submitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                  {t("gbir.payNow")}
-                </Button>
+                <div className="flex flex-col gap-2">
+                  <Button onClick={handlePay} disabled={submitting || !receiptFile}
+                    className="bg-primary text-primary-foreground border-0 rounded-xl gold-glow disabled:opacity-40">
+                    {submitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                    {t("gbir.payNow")}
+                  </Button>
+                  <Button onClick={handleChapaGbir} variant="outline" disabled={paidThisYear}
+                    className="rounded-xl">
+                    {lang === "am" ? "በChapa ክፈል" : "Pay with Chapa"}
+                  </Button>
+                </div>
               </div>
             )}
           </div>

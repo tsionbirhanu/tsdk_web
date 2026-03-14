@@ -164,7 +164,7 @@ const AuthPage = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold gold-glow hover:opacity-90 transition-opacity disabled:opacity-50">
+              className="w-full py-3.5 rounded-xl bg-[#E0C7B7] text-primary-foreground font-semibold gold-glow hover:opacity-90 transition-opacity disabled:opacity-50">
               {loading ? "..." : isLogin ? "Sign In" : "Sign Up"}
             </button>
           </form>
@@ -173,7 +173,7 @@ const AuthPage = () => {
             {isLogin ? "Don't have an account? " : "Already have an account? "}
             <button
               onClick={() => setIsLogin(!isLogin)}
-              className="text-primary font-medium hover:underline">
+              className="text-[#E0C7B7] hover:underline">
               {isLogin ? "Sign Up" : "Sign In"}
             </button>
           </p>

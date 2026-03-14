@@ -1,5 +1,6 @@
 import axios from "axios";
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 import type { VerifyResponse } from "@/types/payment";
 
 export async function GET(req: NextRequest) {
@@ -21,6 +22,27 @@ export async function GET(req: NextRequest) {
     });
 
     const data: VerifyResponse = resp.data;
+
+    // Attempt to reconcile donation record if tx_ref exists in our DB
+    try {
+      const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+      const tx = data?.data?.tx_ref || tx_ref;
+      const status = data?.data?.status || data?.status;
+      if (tx) {
+        // treat Chapa 'success' as verified
+        const isSuccess = String(status).toLowerCase() === "success" || String(status).toLowerCase() === "successful";
+        const updates: any = {
+          status: isSuccess ? "verified" : "failed",
+          raw_response: data,
+        };
+        if (isSuccess) updates.verified_at = new Date().toISOString();
+
+        await supabase.from("donations").update(updates).eq("tx_ref", tx);
+      }
+    } catch (e) {
+      console.error("Failed reconciling donation record:", e);
+    }
+
     return NextResponse.json(data);
   } catch (err: any) {
     console.error("verify error:", err?.response?.data ?? err.message ?? err);

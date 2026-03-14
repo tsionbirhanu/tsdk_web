@@ -28,7 +28,7 @@ const CampaignDetail = () => {
   const params = useParams();
   const id = params.id as string;
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [customAmount, setCustomAmount] = useState("");
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
@@ -108,6 +108,36 @@ const CampaignDetail = () => {
       toast.error(message);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleChapaDonate = async () => {
+    if (!user) {
+      toast.error("Please sign in to donate");
+      return;
+    }
+    if (finalAmount <= 0) {
+      toast.error("Please select an amount");
+      return;
+    }
+    try {
+      const res = await fetch('/api/payment/initiate', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        body: JSON.stringify({ type: 'donation', amount: finalAmount, campaign_id: id }),
+      });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        throw new Error(json?.error?.message || json?.error || 'Failed initiating payment');
+      }
+      const json = await res.json();
+      if (json.checkout_url) {
+        window.location.href = json.checkout_url;
+      } else {
+        toast.error('No checkout URL');
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Payment failed');
     }
   };
 
@@ -333,10 +363,17 @@ const CampaignDetail = () => {
         </div>
 
         <div className="space-y-2 pb-4">
+          <Button onClick={handleChapaDonate} disabled={finalAmount <= 0 || submitting}
+            className="w-full py-6 text-base font-semibold rounded-xl bg-primary text-primary-foreground border-0 gold-glow disabled:opacity-50">
+            {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Heart className="w-4 h-4 mr-2" />}
+            {lang === "am" ? "በChapa ክፈል" : "Pay with Chapa"} {finalAmount > 0 ? ` - ${finalAmount.toLocaleString()} ${t("common.birr")}` : ""}
+          </Button>
+
           <Button
             onClick={handleDonate}
             disabled={submitting || finalAmount <= 0 || !receiptFile}
-            className="w-full py-6 text-base font-semibold rounded-xl bg-primary text-primary-foreground border-0 gold-glow disabled:opacity-50">
+            variant="outline"
+            className="w-full py-4 text-base font-semibold rounded-xl">
             {submitting ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
             ) : (

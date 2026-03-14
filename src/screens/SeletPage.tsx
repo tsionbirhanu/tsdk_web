@@ -5,7 +5,7 @@ import { useI18n } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Plus, Upload, Loader2, CheckCircle } from "lucide-react";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -14,11 +14,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 
 const SeletPage = () => {
   const { t, lang } = useI18n();
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [showCreate, setShowCreate] = useState(false);
   const [title, setTitle] = useState("");
   const [totalAmount, setTotalAmount] = useState("");
-  const [installments, setInstallments] = useState("12");
+  const [installments] = useState("12");
+  const [dueDate, setDueDate] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [payingId, setPayingId] = useState<string | null>(null);
   const [payAmount, setPayAmount] = useState("");
@@ -35,6 +36,44 @@ const SeletPage = () => {
     enabled: !!user,
   });
 
+  // load user's deadlines for selet
+  const [seletDue, setSeletDue] = useState<string | null>(null);
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      if (!user) return;
+      try {
+        const token = session?.access_token;
+        const res = await fetch('/api/notifications/deadline', {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        if (!res.ok) return;
+        const json = await res.json();
+        const found = (json.data || []).find((d: any) => d.type === 'selet');
+        if (mounted && found) setSeletDue(found.due_date);
+      } catch (e) {
+        // ignore
+      }
+    })();
+    return () => { mounted = false; };
+  }, [user]);
+
+  const saveSeletDeadline = async (date: string | null) => {
+    if (!user) return;
+    try {
+      const token = session?.access_token;
+      await fetch('/api/notifications/deadline', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, token ? { Authorization: `Bearer ${token}` } : {}),
+        body: JSON.stringify({ type: 'selet', due_date: date }),
+      });
+      setSeletDue(date);
+      toast.success('Deadline saved');
+    } catch (err) {
+      toast.error('Failed to save deadline');
+    }
+  };
+
   const handleCreate = async () => {
     if (!user || !title || !totalAmount) return;
     setCreating(true);
@@ -43,14 +82,27 @@ const SeletPage = () => {
         user_id: user.id, title, total_amount: Number(totalAmount), installments: Number(installments),
       });
       if (error) throw error;
+      // if the user provided a due date for this selet, save it as their selet deadline
+      if (dueDate) {
+        try {
+          const token = session?.access_token;
+          await fetch('/api/notifications/deadline', {
+            method: 'POST',
+            headers: Object.assign({ 'Content-Type': 'application/json' }, token ? { Authorization: `Bearer ${token}` } : {}),
+            body: JSON.stringify({ type: 'selet', due_date: new Date(dueDate).toISOString() }),
+          });
+        } catch (e) {
+          console.error('Failed saving selet deadline', e);
+        }
+      }
       toast.success(lang === "am" ? "áˆµáˆˆá‰µ á‰°áˆáŒ¥áˆ¯áˆ!" : "Vow created!");
-      setShowCreate(false); setTitle(""); setTotalAmount(""); refetch();
+      setShowCreate(false); setTitle(""); setTotalAmount(""); setDueDate(null); refetch();
     } catch (err: any) { toast.error(err.message); }
     finally { setCreating(false); }
   };
 
   const handlePayInstallment = async (selet: any) => {
-    if (!user || !receiptFile) { toast.error(lang === "am" ? "ማስረጃ" : "Upload receipt"); return; }
+    if (!user || !receiptFile) { toast.error(lang === "am" ? "áˆµáŠ­áˆªáŠ•áˆ¾á‰µ á‹«áˆµáŒˆá‰¡" : "Upload receipt"); return; }
     const amount = Number(payAmount) || (Number(selet.total_amount) / selet.installments);
     if (amount <= 0) return;
 
@@ -68,16 +120,41 @@ const SeletPage = () => {
         selet_id: selet.id,
       });
       if (error) throw error;
-      toast.success(lang === "am" ? "ክፊያ" : "Payment submitted!");
+      toast.success(lang === "am" ? "áŠ­áá‹« á‰°áˆáŠ³áˆ!" : "Payment submitted!");
       setPayingId(null); setReceiptFile(null); setPayAmount(""); refetch();
     } catch (err: any) { toast.error(err.message); }
     finally { setSubmitting(false); }
   };
 
+  const handleChapaPay = async (selet: any) => {
+    if (!user) { toast.error(lang === "am" ? "እባኮን ይግቡ" : "Please sign in"); return; }
+    const amount = Number(payAmount) || (Number(selet.total_amount) / selet.installments);
+    if (amount <= 0) return;
+    try {
+      const res = await fetch('/api/payment/initiate', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        body: JSON.stringify({ type: 'selet', amount, selet_id: selet.id }),
+      });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        throw new Error(json?.error?.message || json?.error || 'Failed initiating payment');
+      }
+      const json = await res.json();
+      if (json.checkout_url) {
+        window.location.href = json.checkout_url;
+      } else {
+        toast.error('No checkout URL');
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Payment failed');
+    }
+  };
+
   return (
     <div>
-      {/* <AppHeader title={t("selet.title")} /> */}
-      <div className="px-4 py-4 space-y-4 animate-fade-in mt-10">
+      
+      <div className="px-4 py-4 space-y-4 animate-fade-in">
         <Dialog open={showCreate} onOpenChange={setShowCreate}>
           <DialogTrigger asChild>
             <Button className="w-full py-5 rounded-xl bg-primary text-primary-foreground border-0 gold-glow">
@@ -91,7 +168,8 @@ const SeletPage = () => {
                 className="w-full px-4 py-3 rounded-xl bg-secondary border border-border text-sm text-foreground" />
               <input type="number" placeholder={lang === "am" ? "áŒ á‰…áˆ‹áˆ‹ áˆ˜áŒ áŠ•" : "Total amount"} value={totalAmount} onChange={(e) => setTotalAmount(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl bg-secondary border border-border text-sm text-foreground" />
-              <input type="number" placeholder={lang === "am" ? "áŠ­áá‹« á‰¥á‹›á‰µ" : "Number of installments"} value={installments} onChange={(e) => setInstallments(e.target.value)}
+              <label className="text-sm font-medium text-foreground mb-1.5 block">{lang === 'am' ? 'የመጀመሪያ ቀን' : 'Start due date'}</label>
+              <input type="text" value={dueDate ?? ""} onChange={(e) => setDueDate(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl bg-secondary border border-border text-sm text-foreground" />
               <Button onClick={handleCreate} disabled={creating || !title || !totalAmount} className="w-full rounded-xl">
                 {creating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
@@ -100,6 +178,8 @@ const SeletPage = () => {
             </div>
           </DialogContent>
         </Dialog>
+
+        
 
         {selets.length === 0 && (
           <div className="glass-card rounded-xl p-8 text-center text-sm text-muted-foreground">
@@ -156,6 +236,9 @@ const SeletPage = () => {
                     <div className="flex gap-2">
                       <Button onClick={() => handlePayInstallment(vow)} disabled={submitting || !receiptFile} className="flex-1 rounded-lg" size="sm">
                         {submitting ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null} {lang === "am" ? "áŠ­áˆáˆ" : "Submit"}
+                      </Button>
+                      <Button onClick={() => handleChapaPay(vow)} variant="outline" className="rounded-lg" size="sm">
+                        {lang === "am" ? "በChapa ክፈል" : "Pay with Chapa"}
                       </Button>
                       <Button variant="outline" size="sm" onClick={() => { setPayingId(null); setReceiptFile(null); }} className="rounded-lg">
                         {t("common.cancel")}

@@ -3,18 +3,18 @@
 import Image from "next/image";
 import AppHeader from "@/components/AppHeader";
 import { useI18n } from "@/lib/i18n";
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Upload, Loader2, CheckCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-// import patternBg from "@/assets/church-banner.jpg";
+import patternBg from "@/assets/pattern-bg.jpg";
 
 const AseratPage = () => {
   const { t, lang } = useI18n();
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [income, setIncome] = useState("");
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -34,6 +34,41 @@ const AseratPage = () => {
     },
     enabled: !!user,
   });
+
+  const [aseratDue, setAseratDue] = useState<string | null>(null);
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      if (!user) return;
+      try {
+        const token = session?.access_token;
+        const res = await fetch('/api/notifications/deadline', {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        if (!res.ok) return;
+        const json = await res.json();
+        const found = (json.data || []).find((d: any) => d.type === 'aserat');
+        if (mounted && found) setAseratDue(found.due_date);
+      } catch (e) {}
+    })();
+    return () => { mounted = false; };
+  }, [user]);
+
+  const saveAseratDeadline = async (date: string | null) => {
+    if (!user) return;
+    try {
+      const token = session?.access_token;
+      await fetch('/api/notifications/deadline', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, token ? { Authorization: `Bearer ${token}` } : {}),
+        body: JSON.stringify({ type: 'aserat', due_date: date }),
+      });
+      setAseratDue(date);
+      toast.success('Deadline saved');
+    } catch (err) {
+      toast.error('Failed to save deadline');
+    }
+  };
 
   const handlePay = async () => {
     if (!user) { toast.error("Please sign in"); return; }
@@ -67,6 +102,30 @@ const AseratPage = () => {
     }
   };
 
+  const handleChapaAserat = async () => {
+    if (!user) { toast.error("Please sign in"); return; }
+    if (titheAmount <= 0) return;
+    try {
+      const res = await fetch('/api/payment/initiate', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        body: JSON.stringify({ type: 'aserat', amount: titheAmount }),
+      });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        throw new Error(json?.error?.message || json?.error || 'Failed initiating payment');
+      }
+      const json = await res.json();
+      if (json.checkout_url) {
+        window.location.href = json.checkout_url;
+      } else {
+        toast.error('No checkout URL');
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Payment failed');
+    }
+  };
+
   const resetForm = () => {
     setSubmitted(false);
     setIncome("");
@@ -76,7 +135,7 @@ const AseratPage = () => {
   if (submitted) {
     return (
       <div>
-        {/* <AppHeader title={t("aserat.title")} /> */}
+        <AppHeader title={t("aserat.title")} />
         <div className="flex flex-col items-center justify-center h-[50vh] animate-fade-in px-4">
           <div className="p-4 rounded-full bg-primary/20 mb-4"><CheckCircle className="w-12 h-12 text-primary" /></div>
           <h2 className="text-xl font-heading font-bold text-foreground mb-2">{lang === "am" ? "አስራት ገብቷል!" : "Aserat Submitted!"}</h2>
@@ -89,11 +148,16 @@ const AseratPage = () => {
 
   return (
     <div>
-      {/* <AppHeader title={t("aserat.title")} /> */}
-      <div className="px-4 py-4 space-y-5 animate-fade-in bg-white">
+     
+      <div className="px-4 py-4 space-y-5 animate-fade-in">
         <div className="relative glass-card rounded-2xl p-5 space-y-4 overflow-hidden">
-          {/* <Image src={patternBg} alt="" fill className="object-cover opacity-10" /> */}
+         
           <div className="relative z-10 space-y-4">
+              <div className="flex gap-2 items-center">
+                <input type="text" value={aseratDue ? new Date(aseratDue).toISOString().slice(0,10) : ""}
+                  onChange={(e) => saveAseratDeadline(e.target.value ? new Date(e.target.value).toISOString() : null)}
+                  className="px-3 py-2 rounded-lg bg-secondary border border-border text-sm text-foreground" />
+              </div>
             <div>
               <label className="text-sm font-medium text-foreground mb-1.5 block font-heading">{t("aserat.income")}</label>
               <div className="relative">
@@ -126,11 +190,16 @@ const AseratPage = () => {
               </button>
             )}
 
-            <Button onClick={handlePay} disabled={titheAmount === 0 || !receiptFile || submitting}
-              className="w-full py-6 text-base font-semibold rounded-xl bg-primary text-primary-foreground border-0 gold-glow disabled:opacity-40">
-              {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-              {submitting ? (lang === "am" ? "በመግባት ላይ­..." : "Submitting...") : t("aserat.pay")}
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={handlePay} disabled={titheAmount === 0 || !receiptFile || submitting}
+                className="flex-1 py-4 text-base font-semibold rounded-xl bg-primary text-primary-foreground border-0 gold-glow disabled:opacity-40">
+                {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                {submitting ? (lang === "am" ? "በመግባት ላይ­..." : "Submitting...") : t("aserat.pay")}
+              </Button>
+              <Button onClick={handleChapaAserat} variant="outline" className="rounded-xl" disabled={titheAmount === 0 || submitting}>
+                {lang === "am" ? "በChapa ክፈል" : "Pay with Chapa"}
+              </Button>
+            </div>
           </div>
         </div>
 
