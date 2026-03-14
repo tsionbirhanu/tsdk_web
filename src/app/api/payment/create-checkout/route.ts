@@ -2,7 +2,7 @@ import axios from "axios";
 import { NextRequest, NextResponse } from "next/server";
 import type { CreateCheckoutRequest, CreateCheckoutResponse } from "@/types/payment";
 
-const CHAPA_CHECKOUT_URL = "https://api.chapa.co/v1/checkout/create";
+const CHAPA_CHECKOUT_URL = "https://api.chapa.co/v1/transaction/initialize";
 
 export async function POST(req: NextRequest) {
   try {

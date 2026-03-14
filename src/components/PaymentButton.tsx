@@ -12,6 +12,7 @@ type Props = {
   callbackUrl?: string;
   returnUrl?: string;
   children?: React.ReactNode;
+  disabled?: boolean;
 };
 
 export default function PaymentButton({
@@ -23,11 +24,13 @@ export default function PaymentButton({
   callbackUrl,
   returnUrl,
   children,
+  disabled = false,
 }: Props) {
   const [loading, setLoading] = React.useState(false);
 
   const handlePay = async () => {
     try {
+      if (disabled) throw new Error("Payment disabled: missing required fields");
       setLoading(true);
       const tx_ref = `tx_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
 
@@ -58,7 +61,7 @@ export default function PaymentButton({
   return (
     <button
       onClick={handlePay}
-      disabled={loading}
+      disabled={loading || disabled}
       className={`px-4 py-2 rounded ${loading ? "opacity-60 cursor-wait" : "bg-primary text-primary-foreground hover:opacity-90"}`}>
       {loading ? "Processing…" : children || `Pay ${amount}`}
     </button>
