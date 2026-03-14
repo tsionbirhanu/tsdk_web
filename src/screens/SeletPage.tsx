@@ -50,7 +50,7 @@ const SeletPage = () => {
   };
 
   const handlePayInstallment = async (selet: any) => {
-    if (!user || !receiptFile) { toast.error(lang === "am" ? "áˆµáŠ­áˆªáŠ•áˆ¾á‰µ á‹«áˆµáŒˆá‰¡" : "Upload receipt"); return; }
+    if (!user || !receiptFile) { toast.error(lang === "am" ? "ማስረጃ" : "Upload receipt"); return; }
     const amount = Number(payAmount) || (Number(selet.total_amount) / selet.installments);
     if (amount <= 0) return;
 
@@ -68,7 +68,7 @@ const SeletPage = () => {
         selet_id: selet.id,
       });
       if (error) throw error;
-      toast.success(lang === "am" ? "áŠ­áá‹« á‰°áˆáŠ³áˆ!" : "Payment submitted!");
+      toast.success(lang === "am" ? "ክፊያ" : "Payment submitted!");
       setPayingId(null); setReceiptFile(null); setPayAmount(""); refetch();
     } catch (err: any) { toast.error(err.message); }
     finally { setSubmitting(false); }
@@ -76,8 +76,8 @@ const SeletPage = () => {
 
   return (
     <div>
-      <AppHeader title={t("selet.title")} />
-      <div className="px-4 py-4 space-y-4 animate-fade-in">
+      {/* <AppHeader title={t("selet.title")} /> */}
+      <div className="px-4 py-4 space-y-4 animate-fade-in mt-10">
         <Dialog open={showCreate} onOpenChange={setShowCreate}>
           <DialogTrigger asChild>
             <Button className="w-full py-5 rounded-xl bg-primary text-primary-foreground border-0 gold-glow">

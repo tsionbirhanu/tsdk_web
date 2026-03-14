@@ -154,18 +154,18 @@ const Dashboard = () => {
   const recentDonations = donations.slice(0, 5);
 
   return (
-    <div className="animate-fade-in">
+    <div className="animate-fade-in bg-white">
       <div className="relative h-64 overflow-hidden">
         <Image src={heroBg} alt="" fill className="object-cover" />
         <div className="absolute inset-0 bg-overlay-dark" />
         <div className="relative z-10 flex flex-col justify-end h-full p-8">
-          <p className="text-sm text-primary/80 font-ethiopic">
+          <p className="text-sm text-white font-ethiopic">
             {t("dash.welcome")}
           </p>
-          <h2 className="text-3xl font-heading font-bold text-foreground mt-1">
+          <h2 className="text-3xl font-heading font-bold text-[#E0C7B7] mt-1">
             {profile?.full_name || user?.email?.split("@")[0] || "Member"}
           </h2>
-          <p className="text-sm text-muted-foreground mt-2">
+          <p className="text-sm text-white mt-2">
             {t("dash.memberSince")}{" "}
             {profile?.member_since || new Date().getFullYear()}
           </p>

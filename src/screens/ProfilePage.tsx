@@ -99,7 +99,7 @@ const ProfilePage = () => {
 
   return (
     <div>
-      <AppHeader title={t("profile.title")} />
+      {/* <AppHeader title={t("profile.title")} /> */}
       <div className="px-4 py-4 space-y-5 animate-fade-in">
         <div className="flex items-center gap-4">
           <div className="relative group">

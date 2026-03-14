@@ -80,7 +80,7 @@ export default function Sidebar() {
 
   const renderNavSection = (title: string, items: typeof memberNav) => (
     <div className="mb-4">
-      <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold px-4 mb-2">
+      <p className="text-[10px] uppercase tracking-wider text-black font-semibold px-4 mb-2">
         {title}
       </p>
       {items.map((item) => {
@@ -90,15 +90,15 @@ export default function Sidebar() {
           <Link
             key={item.path}
             href={item.path}
-            className={`flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg transition-all text-sm ${
+            className={`flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg transition-all text-sm border-l-4 ${
               isActive
-                ? "bg-sidebar-primary text-sidebar-foreground gold-glow"
-                : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                ? "bg-black/20 text-white border-gold font-semibold"
+                : "border-transparent text-black hover:bg-black/10 hover:text-white"
             }`}>
-            <Icon className="w-4 h-4 flex-shrink-0" />
+            <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? "text-gold" : ""}`} />
             <span className="font-medium truncate">{item.label}</span>
             {"badge" in item && item.badge && (
-              <span className="ml-auto text-[9px] px-1.5 py-0.5 rounded-full bg-primary/20 text-primary">
+              <span className="ml-auto text-[9px] px-1.5 py-0.5 rounded-full bg-gold/20 text-gold">
                 {item.badge}
               </span>
             )}
@@ -109,7 +109,7 @@ export default function Sidebar() {
   );
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-60 bg-sidebar border-r border-sidebar-border flex flex-col z-50">
+    <aside className="fixed left-0 top-0 h-screen w-60 bg-[#E0C7b7] border-r border-primary/20 flex flex-col z-50">
       {/* Logo */}
       <div className="p-5 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
@@ -123,8 +123,8 @@ export default function Sidebar() {
             />
           </div>
           <div>
-            <h1 className="font-heading font-bold text-sidebar-foreground">Tsedk</h1>
-            <p className="text-[10px] text-sidebar-foreground/60">Member Portal</p>
+            <h1 className="font-heading font-bold text-black">Tsedk</h1>
+            <p className="text-[10px] text-black">Member Portal</p>
           </div>
         </div>
       </div>
@@ -141,22 +141,22 @@ export default function Sidebar() {
       <div className="p-4 border-t border-sidebar-border space-y-1">
         <Link
           href="/notifications"
-          className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all text-sm ${
+          className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all text-sm border-l-4 ${
             pathname === "/notifications"
-              ? "bg-sidebar-primary text-sidebar-foreground"
-              : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+              ? "bg-black/20 text-black border-gold font-semibold"
+              : "border-transparent text-black/70 hover:bg-black/10 hover:text-black"
           }`}>
-          <Bell className="w-4 h-4" />
+          <Bell className={`w-4 h-4 ${pathname === "/notifications" ? "text-gold" : ""}`} />
           <span className="font-medium">{t("nav.notifications")}</span>
         </Link>
         <Link
           href="/profile"
-          className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all text-sm ${
+          className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all text-sm border-l-4 ${
             pathname === "/profile"
-              ? "bg-sidebar-primary text-sidebar-foreground"
-              : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+              ? "bg-black/20 text-black border-gold font-semibold"
+              : "border-transparent text-black/70 hover:bg-black/10 hover:text-black"
           }`}>
-          <User className="w-4 h-4" />
+          <User className={`w-4 h-4 ${pathname === "/profile" ? "text-gold" : ""}`} />
           <span className="font-medium">{t("nav.profile")}</span>
         </Link>
         <button

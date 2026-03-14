@@ -68,13 +68,13 @@ const DonatePage = () => {
 
   return (
     <div>
-      <AppHeader title={t("donate.title")} />
-      <div className="space-y-4 animate-fade-in">
+      {/* <AppHeader title={t("donate.title")} /> */}
+      <div className="space-y-4 animate-fade-in bg-white">
         <div className="relative h-32 overflow-hidden">
           <Image src={donateBg} alt="" fill className="object-cover" />
           <div className="absolute inset-0 bg-overlay-dark" />
           <div className="relative z-10 flex items-end h-full p-4">
-            <h2 className="text-xl font-heading font-bold text-gold-gradient">{t("donate.title")}</h2>
+            <h2 className="text-xl font-heading font-bold">{t("donate.title")}</h2>
           </div>
         </div>
 
@@ -86,7 +86,7 @@ const DonatePage = () => {
               placeholder={t("donate.search")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-secondary border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
             />
           </div>
 

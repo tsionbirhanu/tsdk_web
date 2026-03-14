@@ -35,7 +35,7 @@ const NotificationsPage = () => {
 
   return (
     <div>
-      <AppHeader title={t("nav.notifications")} />
+      {/* <AppHeader title={t("nav.notifications")} /> */}
       <div className="px-4 py-4 space-y-2 animate-fade-in">
         {isLoading && <p className="text-sm text-muted-foreground text-center py-8">Loading...</p>}
         {!isLoading && notifications.length === 0 && (

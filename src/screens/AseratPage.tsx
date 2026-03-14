@@ -10,7 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import patternBg from "@/assets/pattern-bg.jpg";
+// import patternBg from "@/assets/church-banner.jpg";
 
 const AseratPage = () => {
   const { t, lang } = useI18n();
@@ -76,7 +76,7 @@ const AseratPage = () => {
   if (submitted) {
     return (
       <div>
-        <AppHeader title={t("aserat.title")} />
+        {/* <AppHeader title={t("aserat.title")} /> */}
         <div className="flex flex-col items-center justify-center h-[50vh] animate-fade-in px-4">
           <div className="p-4 rounded-full bg-primary/20 mb-4"><CheckCircle className="w-12 h-12 text-primary" /></div>
           <h2 className="text-xl font-heading font-bold text-foreground mb-2">{lang === "am" ? "አስራት ገብቷል!" : "Aserat Submitted!"}</h2>
@@ -89,10 +89,10 @@ const AseratPage = () => {
 
   return (
     <div>
-      <AppHeader title={t("aserat.title")} />
-      <div className="px-4 py-4 space-y-5 animate-fade-in">
+      {/* <AppHeader title={t("aserat.title")} /> */}
+      <div className="px-4 py-4 space-y-5 animate-fade-in bg-white">
         <div className="relative glass-card rounded-2xl p-5 space-y-4 overflow-hidden">
-          <Image src={patternBg} alt="" fill className="object-cover opacity-10" />
+          {/* <Image src={patternBg} alt="" fill className="object-cover opacity-10" /> */}
           <div className="relative z-10 space-y-4">
             <div>
               <label className="text-sm font-medium text-foreground mb-1.5 block font-heading">{t("aserat.income")}</label>

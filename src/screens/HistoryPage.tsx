@@ -42,7 +42,7 @@ const HistoryPage = () => {
 
   return (
     <div>
-      <AppHeader title={t("history.title")} />
+      {/* <AppHeader title={t("history.title")} /> */}
       <div className="px-4 py-4 space-y-4 animate-fade-in">
         <div className="flex items-center justify-between">
           <div>

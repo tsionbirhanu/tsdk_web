@@ -34,7 +34,7 @@ const GbirPage = () => {
   const paidThisYear = gbirPayments.some((p: any) => new Date(p.created_at).getFullYear() === currentYear && p.status !== "rejected");
 
   const handlePay = async () => {
-    if (!user || !receiptFile) { toast.error(lang === "am" ? "áˆµáŠ­áˆªáŠ•áˆ¾á‰µ á‹«áˆµáŒˆá‰¡" : "Upload receipt"); return; }
+    if (!user || !receiptFile) { toast.error(lang === "am" ? "ማስረጃ" : "Upload receipt"); return; }
     setSubmitting(true);
     try {
       const ext = receiptFile.name.split(".").pop();
@@ -48,7 +48,7 @@ const GbirPage = () => {
         receipt_url: urlData.publicUrl, notes: `Gbir ${currentYear}`,
       });
       if (error) throw error;
-      toast.success(lang === "am" ? "áŒá‰¥áˆ­ á‰°áˆáŠ³áˆ!" : "Gbir submitted!");
+      toast.success(lang === "am" ? "ግብር ሰብሚተድ!" : "Gbir submitted!");
       setReceiptFile(null); refetch();
     } catch (err: any) { toast.error(err.message); }
     finally { setSubmitting(false); }
@@ -56,10 +56,10 @@ const GbirPage = () => {
 
   return (
     <div>
-      <AppHeader title={t("gbir.title")} />
-      <div className="px-4 py-4 space-y-5 animate-fade-in">
+      {/* <AppHeader title={t("gbir.title")} /> */}
+      <div className="px-4 py-4 space-y-5 animate-fade-in mt-6">
         <div className="relative rounded-2xl overflow-hidden">
-          <Image src={crossIcon} alt="" fill className="object-cover" />
+          {/* <Image src={crossIcon} alt="" fill className="object-cover" /> */}
           <div className="absolute inset-0 bg-overlay-dark" />
           <div className="relative z-10 p-6 text-center space-y-3">
             <p className="text-sm text-muted-foreground">{t("gbir.status")} â€” {currentYear}</p>
@@ -81,7 +81,7 @@ const GbirPage = () => {
                 ) : (
                   <button onClick={() => fileInputRef.current?.click()}
                     className="mx-auto border-2 border-dashed border-border/50 rounded-xl px-6 py-3 flex items-center gap-2 text-sm text-muted-foreground hover:border-primary/40">
-                    <Upload className="w-4 h-4" /> {lang === "am" ? "áˆµáŠ­áˆªáŠ•áˆ¾á‰µ" : "Upload receipt"}
+                    <Upload className="w-4 h-4" /> {lang === "am" ? "ማስረጃ" : "Upload receipt"}
                   </button>
                 )}
                 <Button onClick={handlePay} disabled={submitting || !receiptFile}
