@@ -20,6 +20,12 @@ const AseratPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Chapa payment form fields
+  const [chapaFirstName, setChapaFirstName] = useState("");
+  const [chapaLastName, setChapaLastName] = useState("");
+  const [chapaEmail, setChapaEmail] = useState("");
+  const [showChapaForm, setShowChapaForm] = useState(false);
 
   const titheAmount = useMemo(() => {
     const val = parseFloat(income);
@@ -34,6 +40,27 @@ const AseratPage = () => {
     },
     enabled: !!user,
   });
+
+  // Fetch user profile for Chapa payment
+  const { data: profile } = useQuery({
+    queryKey: ["profile", user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase.from("profiles").select("*").eq("user_id", user.id).single();
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  // Initialize Chapa form fields with user data
+  useEffect(() => {
+    if (profile && user) {
+      const nameParts = (profile.full_name || "").split(" ");
+      setChapaFirstName(nameParts[0] || "");
+      setChapaLastName(nameParts.slice(1).join(" ") || "");
+      setChapaEmail(user.email || profile.email || "");
+    }
+  }, [profile, user]);
 
   const [aseratDue, setAseratDue] = useState<string | null>(null);
   useEffect(() => {
@@ -105,11 +132,31 @@ const AseratPage = () => {
   const handleChapaAserat = async () => {
     if (!user) { toast.error("Please sign in"); return; }
     if (titheAmount <= 0) return;
+    
+    // Validate required fields
+    if (!chapaFirstName || !chapaLastName || !chapaEmail) {
+      toast.error(lang === "am" ? "እባኮን ሁሉንም መረጃዎች ይሙሉ" : "Please fill in all required fields");
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(chapaEmail)) {
+      toast.error(lang === "am" ? "የትክክለኛ ኢሜይል አድራሻ ያስገቡ" : "Please enter a valid email address");
+      return;
+    }
+
     try {
       const res = await fetch('/api/payment/initiate', {
         method: 'POST',
         headers: Object.assign({ 'Content-Type': 'application/json' }, session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
-        body: JSON.stringify({ type: 'aserat', amount: titheAmount }),
+        body: JSON.stringify({ 
+          type: 'aserat', 
+          amount: titheAmount,
+          first_name: chapaFirstName,
+          last_name: chapaLastName,
+          email: chapaEmail,
+        }),
       });
       if (!res.ok) {
         const json = await res.json().catch(() => ({}));
@@ -172,33 +219,88 @@ const AseratPage = () => {
               <p className="text-3xl font-heading font-bold text-primary mt-1">{titheAmount.toLocaleString()} <span className="text-base font-sans">{t("common.birr")}</span></p>
             </div>
 
-            {/* Receipt Upload */}
-            <input ref={fileInputRef} type="file" accept="image/*" className="hidden"
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) { if (f.size > 5*1024*1024) { toast.error("Max 5MB"); return; } setReceiptFile(f); } }} />
-            {receiptFile ? (
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-secondary border border-border">
-                <img src={URL.createObjectURL(receiptFile)} alt="" className="w-12 h-12 rounded-lg object-cover" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">{receiptFile.name}</p>
+            {/* Payment Method Selection */}
+            <div className="space-y-3">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{lang === "am" ? "የክፍያ ዘዴ" : "Payment Method"}</p>
+              
+              {/* Option 1: Screenshot Upload */}
+              <div className="border border-border rounded-xl p-3 space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-primary"></div>
+                  <span className="text-sm font-medium text-foreground">{lang === "am" ? "የክፍያ ስክሪንሾት ይላኩ" : "Upload Payment Screenshot"}</span>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => { setReceiptFile(null); if(fileInputRef.current) fileInputRef.current.value=""; }}>{lang === "am" ? "á‰€á‹­áˆ­" : "Change"}</Button>
+                <input ref={fileInputRef} type="file" accept="image/*" className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) { if (f.size > 5*1024*1024) { toast.error("Max 5MB"); return; } setReceiptFile(f); } }} />
+                {receiptFile ? (
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-secondary border border-border">
+                    <img src={URL.createObjectURL(receiptFile)} alt="" className="w-12 h-12 rounded-lg object-cover" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{receiptFile.name}</p>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => { setReceiptFile(null); if(fileInputRef.current) fileInputRef.current.value=""; }}>{lang === "am" ? "ቀይር" : "Change"}</Button>
+                  </div>
+                ) : (
+                  <button onClick={() => fileInputRef.current?.click()} className="w-full border-2 border-dashed border-border rounded-xl p-4 flex flex-col items-center gap-2 hover:border-primary/40 transition-colors">
+                    <Upload className="w-6 h-6 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">{lang === "am" ? "ስክሪንሾት ይላኩ" : "Upload payment screenshot"}</span>
+                  </button>
+                )}
+                <Button onClick={handlePay} disabled={titheAmount === 0 || !receiptFile || submitting}
+                  className="w-full py-3 text-base font-semibold rounded-xl bg-primary text-primary-foreground border-0 gold-glow disabled:opacity-40">
+                  {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                  {submitting ? (lang === "am" ? "በመግባት ላይ..." : "Submitting...") : (lang === "am" ? "አስገባ" : "Submit with Screenshot")}
+                </Button>
               </div>
-            ) : (
-              <button onClick={() => fileInputRef.current?.click()} className="w-full border-2 border-dashed border-border rounded-xl p-4 flex flex-col items-center gap-2 hover:border-primary/40 transition-colors">
-                <Upload className="w-6 h-6 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">{lang === "am" ? "" : "Upload payment screenshot"}</span>
-              </button>
-            )}
 
-            <div className="flex gap-2">
-              <Button onClick={handlePay} disabled={titheAmount === 0 || !receiptFile || submitting}
-                className="flex-1 py-4 text-base font-semibold rounded-xl bg-primary text-primary-foreground border-0 gold-glow disabled:opacity-40">
-                {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                {submitting ? (lang === "am" ? "በመግባት ላይ­..." : "Submitting...") : t("aserat.pay")}
-              </Button>
-              <Button onClick={handleChapaAserat} variant="outline" className="rounded-xl" disabled={titheAmount === 0 || submitting}>
-                {lang === "am" ? "በChapa ክፈል" : "Pay with Chapa"}
-              </Button>
+              {/* Option 2: Chapa Payment */}
+              <div className="border border-border rounded-xl p-3 space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-primary"></div>
+                  <span className="text-sm font-medium text-foreground">{lang === "am" ? "በChapa በመስመር ላይ ይክፈሉ" : "Pay Online with Chapa"}</span>
+                </div>
+                <p className="text-xs text-muted-foreground">{lang === "am" ? "በባንክ በመስመር ላይ ወይም ሞባይል ማኔ በመጠቀም ይክፈሉ" : "Pay securely online using bank or mobile money"}</p>
+                
+                {!showChapaForm ? (
+                  <Button onClick={() => setShowChapaForm(true)} variant="outline" className="w-full rounded-xl py-3" disabled={titheAmount === 0 || submitting}>
+                    {lang === "am" ? "በChapa ክፈል" : "Pay with Chapa"}
+                  </Button>
+                ) : (
+                  <div className="space-y-2">
+                    <input
+                      type="text"
+                      placeholder={lang === "am" ? "የመጀመሪያ ስም" : "First Name"}
+                      value={chapaFirstName}
+                      onChange={(e) => setChapaFirstName(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-sm text-foreground"
+                      required
+                    />
+                    <input
+                      type="text"
+                      placeholder={lang === "am" ? "የአባት ስም" : "Last Name"}
+                      value={chapaLastName}
+                      onChange={(e) => setChapaLastName(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-sm text-foreground"
+                      required
+                    />
+                    <input
+                      type="email"
+                      placeholder={lang === "am" ? "ኢሜይል" : "Email"}
+                      value={chapaEmail}
+                      onChange={(e) => setChapaEmail(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-sm text-foreground"
+                      required
+                    />
+                    <div className="flex gap-2">
+                      <Button onClick={handleChapaAserat} variant="outline" className="flex-1 rounded-xl py-3" disabled={titheAmount === 0 || submitting}>
+                        {lang === "am" ? "ክፈል" : "Pay Now"}
+                      </Button>
+                      <Button onClick={() => setShowChapaForm(false)} variant="ghost" className="rounded-xl py-3">
+                        {lang === "am" ? "ተመለስ" : "Cancel"}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

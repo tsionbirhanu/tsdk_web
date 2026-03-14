@@ -26,7 +26,6 @@ Title: ${campaignDetails.title || campaignDetails.name || "N/A"}
 Description: ${campaignDetails.description || "N/A"}
 Goal Amount: ${campaignDetails.goal_amount || campaignDetails.goalAmount || 0}
 Current Amount: ${campaignDetails.raised_amount || campaignDetails.current_amount || campaignDetails.currentAmount || 0}
-End Date: ${campaignDetails.end_date || campaignDetails.endDate || "N/A"}
 
 Output ONLY the caption text — no explanation, no quotation marks, no preamble.`;
 }
@@ -46,6 +45,16 @@ export async function POST(req: NextRequest) {
         {
           error: "Missing required fields: campaign_id, platform, tone, language",
         },
+        { status: 400 },
+      );
+    }
+
+    // Validate campaign_id format (should be UUID)
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(campaign_id)) {
+      console.error("Invalid campaign_id format:", campaign_id);
+      return NextResponse.json(
+        { error: "Invalid campaign ID format" },
         { status: 400 },
       );
     }
@@ -99,18 +108,36 @@ export async function POST(req: NextRequest) {
     }
 
     // Fetch campaign details
-    const { data: campaign, error: campaignError } = await supabase
+    console.log("Fetching campaign with ID:", campaign_id);
+    const { data: campaigns, error: campaignError } = await supabase
       .from("campaigns")
-      .select("id, title, description, goal_amount, raised_amount, end_date")
-      .eq("id", campaign_id)
-      .single();
+      .select("id, title, description, goal_amount, raised_amount, created_at, updated_at")
+      .eq("id", campaign_id);
 
-    if (campaignError || !campaign) {
+    if (campaignError) {
+      console.error("Campaign fetch error:", campaignError);
       return NextResponse.json(
-        { error: "Campaign not found" },
+        { error: `Failed to fetch campaign: ${campaignError.message}` },
+        { status: 500 },
+      );
+    }
+
+    if (!campaigns || campaigns.length === 0) {
+      console.error("Campaign not found. ID:", campaign_id);
+      // Try to list all campaigns to help debug
+      const { data: allCampaigns } = await supabase
+        .from("campaigns")
+        .select("id, title")
+        .limit(5);
+      console.log("Available campaigns (first 5):", allCampaigns);
+      return NextResponse.json(
+        { error: `Campaign not found with ID: ${campaign_id}` },
         { status: 404 },
       );
     }
+
+    const campaign = campaigns[0];
+    console.log("Campaign found:", campaign.id, campaign.title);
 
     // Build system prompt
     const systemPrompt = buildCaptionSystemPrompt(
@@ -120,8 +147,12 @@ export async function POST(req: NextRequest) {
       campaign,
     );
 
+    console.log("System prompt length:", systemPrompt.length);
+    console.log("Platform:", platform, "Tone:", tone, "Language:", language);
+
     const geminiKey = process.env.GEMINI_API_KEY || process.env.Gemini_API_KEY;
     if (!geminiKey) {
+      console.error("Gemini API key not found in environment variables");
       return NextResponse.json(
         { error: "AI service not configured" },
         { status: 500 },
@@ -129,40 +160,57 @@ export async function POST(req: NextRequest) {
     }
 
     const modelName = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${geminiKey}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          system_instruction: {
-            parts: [{ text: systemPrompt }],
-          },
-          contents: [
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${geminiKey}`;
+    const requestBody = {
+      system_instruction: {
+        parts: [{ text: systemPrompt }],
+      },
+      contents: [
+        {
+          parts: [
             {
-              parts: [
-                {
-                  text: `Generate a ${tone} caption for ${platform} in ${language}.`,
-                },
-              ],
+              text: `Generate a ${tone} caption for ${platform} in ${language}.`,
             },
           ],
-        }),
+        },
+      ],
+    };
+
+    console.log("Calling Gemini API:", apiUrl.replace(geminiKey, "***"));
+    console.log("Request body preview:", JSON.stringify(requestBody).substring(0, 200));
+
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-    );
+      body: JSON.stringify(requestBody),
+    });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error("Gemini API error:", errorData);
+      const errorText = await response.text();
+      let errorData: any = {};
+      try {
+        errorData = JSON.parse(errorText);
+      } catch {
+        errorData = { message: errorText };
+      }
+      console.error("Gemini API error:", {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorData,
+      });
       return NextResponse.json(
-        { error: "Failed to generate caption" },
+        {
+          error: errorData.error?.message || errorData.message || `Gemini API error: ${response.status} ${response.statusText}`
+        },
         { status: 500 },
       );
     }
 
     const data = await response.json();
+    console.log("Gemini API response:", JSON.stringify(data).substring(0, 500));
+
     if (
       !data.candidates ||
       !data.candidates[0] ||
@@ -171,9 +219,9 @@ export async function POST(req: NextRequest) {
       !data.candidates[0].content.parts[0] ||
       !data.candidates[0].content.parts[0].text
     ) {
-      console.error("Unexpected API response format:", data);
+      console.error("Unexpected API response format:", JSON.stringify(data));
       return NextResponse.json(
-        { error: "Invalid response format from AI" },
+        { error: "Invalid response format from AI. Please check server logs." },
         { status: 500 },
       );
     }
@@ -198,10 +246,11 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ caption, saved: true });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error generating caption:", error);
+    const errorMessage = error?.message || error?.toString() || "Unknown error occurred";
     return NextResponse.json(
-      { error: "Failed to generate caption" },
+      { error: `Failed to generate caption: ${errorMessage}` },
       { status: 500 },
     );
   }
