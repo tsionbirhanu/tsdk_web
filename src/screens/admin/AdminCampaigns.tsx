@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,10 +30,10 @@ const AdminCampaigns = () => {
       toast.error("Title is required");
       return;
     }
-    
+
     setUploading(true);
     let imageUrl = null;
-    
+
     try {
       // Upload image if provided
       if (imageFile) {
@@ -42,19 +42,19 @@ const AdminCampaigns = () => {
         const { error: uploadErr } = await supabase.storage
           .from("receipts")
           .upload(filePath, imageFile);
-        
+
         if (uploadErr) {
           toast.error("Failed to upload image: " + uploadErr.message);
           setUploading(false);
           return;
         }
-        
+
         const { data: urlData } = supabase.storage
           .from("receipts")
           .getPublicUrl(filePath);
         imageUrl = urlData.publicUrl;
       }
-      
+
       const { error } = await supabase.from("campaigns").insert({
         title: form.title,
         title_am: form.title_am || null,
@@ -64,7 +64,7 @@ const AdminCampaigns = () => {
         goal_amount: Number(form.goal_amount) || 0,
         image_url: imageUrl,
       });
-      
+
       if (error) { toast.error(error.message); return; }
       toast.success("Campaign created");
       setShowForm(false);
@@ -98,10 +98,10 @@ const AdminCampaigns = () => {
       toast.error("Title is required");
       return;
     }
-    
+
     setUploading(true);
     let imageUrl = imagePreview;
-    
+
     try {
       // Upload new image if provided
       if (imageFile) {
@@ -110,19 +110,19 @@ const AdminCampaigns = () => {
         const { error: uploadErr } = await supabase.storage
           .from("receipts")
           .upload(filePath, imageFile);
-        
+
         if (uploadErr) {
           toast.error("Failed to upload image: " + uploadErr.message);
           setUploading(false);
           return;
         }
-        
+
         const { data: urlData } = supabase.storage
           .from("receipts")
           .getPublicUrl(filePath);
         imageUrl = urlData.publicUrl;
       }
-      
+
       const { error } = await supabase.from("campaigns").update({
         title: form.title,
         title_am: form.title_am || null,
@@ -132,7 +132,7 @@ const AdminCampaigns = () => {
         goal_amount: Number(form.goal_amount) || 0,
         image_url: imageUrl,
       }).eq("id", editingId);
-      
+
       if (error) { toast.error(error.message); return; }
       toast.success("Campaign updated");
       setShowForm(false);
@@ -180,7 +180,7 @@ const AdminCampaigns = () => {
           <h3 className="font-heading font-semibold text-foreground">{editingId ? "Edit Campaign" : "Create Campaign"}</h3>
           <div className="grid sm:grid-cols-2 gap-4">
             <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Title" className="px-4 py-2.5 rounded-lg bg-secondary border border-border text-sm text-foreground placeholder:text-muted-foreground" />
-            
+
             <input value={form.goal_amount} onChange={(e) => setForm({ ...form, goal_amount: e.target.value })} placeholder="Goal Amount (ETB)" type="number" className="px-4 py-2.5 rounded-lg bg-secondary border border-border text-sm text-foreground placeholder:text-muted-foreground" />
             <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="px-4 py-2.5 rounded-lg bg-secondary border border-border text-sm text-foreground">
               <option value="general">General</option>
@@ -190,7 +190,7 @@ const AdminCampaigns = () => {
             </select>
           </div>
           <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Description" rows={3} className="w-full px-4 py-2.5 rounded-lg bg-secondary border border-border text-sm text-foreground placeholder:text-muted-foreground" />
-          
+
           {/* Image Upload */}
           <div>
             <label className="text-xs text-muted-foreground mb-1 block">Campaign Image</label>
@@ -235,7 +235,7 @@ const AdminCampaigns = () => {
               </button>
             )}
           </div>
-          
+
           <div className="flex gap-3">
             <button onClick={editingId ? handleUpdate : handleCreate} disabled={uploading} className="px-6 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50 flex items-center gap-2">
               {uploading && <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />}

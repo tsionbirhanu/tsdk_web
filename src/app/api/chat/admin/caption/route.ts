@@ -1,33 +1,77 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 
-const ADMIN_CAPTION_SYSTEM_PROMPT = `You are a social media manager for a church organization called TSEDK. Your task is to generate 3 exciting, engaging, and shareable social media captions for a fundraising campaign. The campaign details are provided below.
+function buildCaptionSystemPrompt(
+  platform: string,
+  tone: string,
+  language: string,
+  campaignDetails: any,
+): string {
+  const platformGuidelines: Record<string, string> = {
+    telegram: "For Telegram: up to 280 characters, may include emojis.",
+    tiktok: "For TikTok: punchy, 1-2 sentences, hook first.",
+    facebook: "For Facebook: up to 400 characters, warm community tone.",
+  };
 
-Guidelines:
-- The captions should be in Amharic.
-- Each caption must include relevant hashtags (e.g., #TSEDK, #EthiopianChurch, #Fundraising, #Community).
-- Each caption must have a clear call-to-action, encouraging people to donate.
-- The tone should be inspiring, hopeful, and community-focused.
-- You must generate exactly 3 distinct options.
-- Present the output as a JSON object with a single key "captions" which is an array of 3 strings.
-- Do not add any other text, greetings, or explanations. Just the JSON.
+  const languageNote: Record<string, string> = {
+    amharic: "Amharic uses Ge'ez script.",
+    afan_oromo: "Afan Oromo uses Latin script.",
+    english: "English uses standard English.",
+  };
 
-Example Output:
-{
-  "captions": [
-    "Caption 1...",
-    "Caption 2...",
-    "Caption 3..."
-  ]
-}`;
+  return `You are a social media caption writer for an Orthodox church fundraising platform. Generate a single caption for the platform and tone specified. Write ONLY in the language specified. ${languageNote[language] || ""} ${platformGuidelines[platform] || ""} 
+
+Campaign Details:
+Title: ${campaignDetails.title || campaignDetails.name || "N/A"}
+Description: ${campaignDetails.description || "N/A"}
+Goal Amount: ${campaignDetails.goal_amount || campaignDetails.goalAmount || 0}
+Current Amount: ${campaignDetails.raised_amount || campaignDetails.current_amount || campaignDetails.currentAmount || 0}
+End Date: ${campaignDetails.end_date || campaignDetails.endDate || "N/A"}
+
+Output ONLY the caption text — no explanation, no quotation marks, no preamble.`;
+}
 
 export async function POST(req: NextRequest) {
   try {
-    const { campaignId } = await req.json();
+    const { campaign_id, platform, tone, language } = await req.json();
     const token = req.headers.get("authorization")?.replace("Bearer ", "");
 
     if (!token) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Validate required fields
+    if (!campaign_id || !platform || !tone || !language) {
+      return NextResponse.json(
+        {
+          error: "Missing required fields: campaign_id, platform, tone, language",
+        },
+        { status: 400 },
+      );
+    }
+
+    // Validate platform
+    if (!["telegram", "tiktok", "facebook"].includes(platform)) {
+      return NextResponse.json(
+        { error: "Platform must be one of: telegram, tiktok, facebook" },
+        { status: 400 },
+      );
+    }
+
+    // Validate tone
+    if (!["formal", "emotional", "urgent"].includes(tone)) {
+      return NextResponse.json(
+        { error: "Tone must be one of: formal, emotional, urgent" },
+        { status: 400 },
+      );
+    }
+
+    // Validate language
+    if (!["amharic", "afan_oromo", "english"].includes(language)) {
+      return NextResponse.json(
+        { error: "Language must be one of: amharic, afan_oromo, english" },
+        { status: 400 },
+      );
     }
 
     const supabase = createClient(
@@ -54,17 +98,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    if (!campaignId) {
-      return NextResponse.json(
-        { error: "Campaign ID is required" },
-        { status: 400 },
-      );
-    }
-
+    // Fetch campaign details
     const { data: campaign, error: campaignError } = await supabase
       .from("campaigns")
-      .select("*")
-      .eq("id", campaignId)
+      .select("id, title, description, goal_amount, raised_amount, end_date")
+      .eq("id", campaign_id)
       .single();
 
     if (campaignError || !campaign) {
@@ -74,14 +112,25 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const campaignDetails = `Campaign Details:\n${JSON.stringify(
+    // Build system prompt
+    const systemPrompt = buildCaptionSystemPrompt(
+      platform,
+      tone,
+      language,
       campaign,
-      null,
-      2,
-    )}`;
+    );
 
+    const geminiKey = process.env.GEMINI_API_KEY || process.env.Gemini_API_KEY;
+    if (!geminiKey) {
+      return NextResponse.json(
+        { error: "AI service not configured" },
+        { status: 500 },
+      );
+    }
+
+    const modelName = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${geminiKey}`,
       {
         method: "POST",
         headers: {
@@ -89,15 +138,13 @@ export async function POST(req: NextRequest) {
         },
         body: JSON.stringify({
           system_instruction: {
-            parts: {
-              text: ADMIN_CAPTION_SYSTEM_PROMPT,
-            },
+            parts: [{ text: systemPrompt }],
           },
           contents: [
             {
               parts: [
                 {
-                  text: campaignDetails,
+                  text: `Generate a ${tone} caption for ${platform} in ${language}.`,
                 },
               ],
             },
@@ -107,10 +154,10 @@ export async function POST(req: NextRequest) {
     );
 
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData = await response.json().catch(() => ({}));
       console.error("Gemini API error:", errorData);
       return NextResponse.json(
-        { error: "Failed to generate captions" },
+        { error: "Failed to generate caption" },
         { status: 500 },
       );
     }
@@ -130,23 +177,31 @@ export async function POST(req: NextRequest) {
         { status: 500 },
       );
     }
-    const rawContent = data.candidates[0].content.parts[0].text;
 
-    // Attempt to parse the JSON from the response
-    const captionsJson = JSON.parse(rawContent);
+    let caption = data.candidates[0].content.parts[0].text.trim();
+    // Remove quotation marks if present
+    caption = caption.replace(/^["']|["']$/g, "");
 
-    // Save the generated captions to the database
-    await supabase.from("ai_captions").insert({
-      campaign_id: campaignId,
-      generated_captions: captionsJson.captions,
-      created_by: user.id,
+    // Save to AI_Captions table
+    const { error: insertError } = await supabase.from("ai_captions").insert({
+      campaign_id: campaign_id,
+      language: language,
+      platform: platform,
+      tone: tone,
+      generated_text: caption,
+      created_at: new Date().toISOString(),
     });
 
-    return NextResponse.json(captionsJson);
+    if (insertError) {
+      console.error("Error saving caption:", insertError);
+      // Still return the caption even if save fails
+    }
+
+    return NextResponse.json({ caption, saved: true });
   } catch (error) {
-    console.error("Error generating captions:", error);
+    console.error("Error generating caption:", error);
     return NextResponse.json(
-      { error: "Failed to generate captions" },
+      { error: "Failed to generate caption" },
       { status: 500 },
     );
   }

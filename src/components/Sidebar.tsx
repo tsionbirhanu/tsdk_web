@@ -40,12 +40,6 @@ export default function Sidebar() {
     { path: "/selet", icon: Church, label: t("nav.selet") },
     { path: "/gbir", icon: CreditCard, label: t("nav.gbir") },
     { path: "/history", icon: Clock, label: t("nav.history") },
-    {
-      path: "/ai-chat",
-      icon: MessageCircle,
-      label: t("nav.aiChat"),
-      badge: "AI",
-    },
   ];
 
   const adminNav = [

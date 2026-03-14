@@ -133,13 +133,54 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   const loadChatSession = async (sessionId: string) => {
     setIsLoading(true);
+    setError(null);
     setActiveSessionId(sessionId);
-    // Simplified: In a real app, you'd fetch the full conversation for this session
-    // For now, we just set the ID and let sendMessage handle the context.
-    // This assumes the backend reconstructs history.
     setActiveConversation([]); // Clear previous messages
     setIsOpen(true);
-    setIsLoading(false);
+
+    try {
+      const endpoints = getApiEndpoints();
+      if (!endpoints.history) {
+        setIsLoading(false);
+        return;
+      }
+
+      // Determine session endpoint based on role
+      let sessionEndpoint: string;
+      if (hasRole("treasurer")) {
+        sessionEndpoint = "/api/chat/treasurer/session";
+      } else if (hasRole("member") || hasRole("admin")) {
+        sessionEndpoint = "/api/chat/member/session";
+      } else {
+        setIsLoading(false);
+        return;
+      }
+
+      const headers: any = {};
+      if (session?.access_token) {
+        headers.Authorization = `Bearer ${session.access_token}`;
+      }
+
+      const response = await fetch(
+        `${sessionEndpoint}?sessionId=${encodeURIComponent(sessionId)}`,
+        { headers },
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Session fetch error:", response.status, errorText);
+        throw new Error(`Failed to load session: ${response.status}`);
+      }
+
+      const messages: ChatMessage[] = await response.json();
+      setActiveConversation(Array.isArray(messages) ? messages : []);
+    } catch (e: any) {
+      console.error("Error loading chat session:", e);
+      setError(e.message || "Failed to load chat session");
+      setActiveConversation([]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const sendMessage = async (message: string) => {
@@ -305,7 +346,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     startNewChat,
     loadChatSession,
     sendMessage,
-    deleteHistory: async () => {}, // Placeholder
+    deleteHistory: async () => { }, // Placeholder
     generateCaptions: hasRole("admin") ? generateCaptions : undefined,
   };
 

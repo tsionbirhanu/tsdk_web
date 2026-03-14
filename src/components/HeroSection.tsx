@@ -39,7 +39,7 @@ const HeroSection = () => {
             transition={{ duration: 0.8, delay: 0.45 }}
             className="mt-5 text-xl lg:text-2xl font-semibold leading-relaxed max-w-2xl">
             Empowering Orthodox Communities <br />
-            Through Digitalized Faith Giving & Finance
+            Through Digitalized Faith Giving and Finance
           </motion.h2>
 
           <motion.p

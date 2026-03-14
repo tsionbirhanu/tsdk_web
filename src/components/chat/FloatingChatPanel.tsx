@@ -23,18 +23,12 @@ export function FloatingChatPanel() {
   const { hasRole, user } = useAuth();
   const [showHistory, setShowHistory] = useState(false);
 
-  // Admin-specific state to toggle between chat and caption generator
-  const [adminView, setAdminView] = useState<"chat" | "caption">("chat");
-
   const isAdmin = hasRole("admin");
 
   if (!isOpen) return null;
 
   const handleNewChat = () => {
     startNewChat();
-    if (isAdmin) {
-      setAdminView("chat");
-    }
   };
 
   const isTreasurer = hasRole("treasurer");
@@ -44,9 +38,7 @@ export function FloatingChatPanel() {
       ? "Treasurer AI"
       : "TSEDK AI";
   const subtitle = isAdmin
-    ? adminView === "caption"
-      ? "Caption Generator"
-      : "Support Assistant"
+    ? "Caption Generator"
     : isTreasurer
       ? "Financial Assistant"
       : !user
@@ -60,7 +52,7 @@ export function FloatingChatPanel() {
       {/* Header */}
       <div className="flex items-center justify-between border-b border-[#2F2F2F] bg-[#252525] p-4">
         <div className="flex items-center gap-2">
-          {history.length > 0 && (
+          {!isAdmin && history.length > 0 && (
             <button
               onClick={() => setShowHistory(!showHistory)}
               className="p-1.5 hover:bg-[#2F2F2F] rounded-md transition-colors"
@@ -97,49 +89,19 @@ export function FloatingChatPanel() {
 
       {/* Main Content Area */}
       <div className="relative flex flex-1 overflow-hidden">
-        <ChatHistorySidebar
-          isOpen={showHistory}
-          history={history}
-          onLoadSession={(sessionId) => {
-            loadChatSession(sessionId);
-            setShowHistory(false);
-            if (isAdmin) setAdminView("chat");
-          }}
-        />
+        {!isAdmin && (
+          <ChatHistorySidebar
+            isOpen={showHistory}
+            history={history}
+            onLoadSession={(sessionId) => {
+              loadChatSession(sessionId);
+              setShowHistory(false);
+            }}
+          />
+        )}
         <div className="flex min-w-0 flex-1 flex-col">
           {isAdmin ? (
-            <>
-              <div className="flex p-2 border-b border-[#2F2F2F]">
-                <button
-                  onClick={() => setAdminView("chat")}
-                  className={`px-3 py-1 text-sm rounded-md ${
-                    adminView === "chat"
-                      ? "bg-blue-600 text-white"
-                      : "text-gray-300"
-                  }`}>
-                  General Chat
-                </button>
-                <button
-                  onClick={() => setAdminView("caption")}
-                  className={`px-3 py-1 text-sm rounded-md ${
-                    adminView === "caption"
-                      ? "bg-blue-600 text-white"
-                      : "text-gray-300"
-                  }`}>
-                  Caption Generator
-                </button>
-              </div>
-              {adminView === "chat" ? (
-                <MemberLimitedChat
-                  messages={activeConversation}
-                  onSendMessage={sendMessage}
-                  isLoading={isLoading}
-                  error={error}
-                />
-              ) : (
-                <CaptionGenerator />
-              )}
-            </>
+            <CaptionGenerator />
           ) : (
             <MemberLimitedChat
               messages={activeConversation}

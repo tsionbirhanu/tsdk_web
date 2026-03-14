@@ -34,11 +34,11 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // This query is simplified. A real implementation might need to be more
-    // complex to handle permissions across the entire church.
+    // Treasurers can only see their own chat history
     const { data, error } = await supabase
       .from("chat_history")
       .select("session_id, session_title, created_at")
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
     if (error) throw error;
