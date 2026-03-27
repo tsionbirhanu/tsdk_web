@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -53,23 +54,37 @@ export async function POST(req: NextRequest) {
 
     // If linked auth user exists, delete from auth
     if (profile.user_id) {
-      const { error: deleteAuthError } = await supabase.auth.admin.deleteUser(profile.user_id);
+      const { error: deleteAuthError } = await supabase.auth.admin.deleteUser(
+        profile.user_id,
+      );
       if (deleteAuthError) {
         console.error("Error deleting auth user:", deleteAuthError);
-        return NextResponse.json({ error: deleteAuthError.message || "Failed to delete auth user" }, { status: 500 });
+        return NextResponse.json(
+          { error: deleteAuthError.message || "Failed to delete auth user" },
+          { status: 500 },
+        );
       }
     }
 
     // Remove profile row
-    const { error: deleteProfileError } = await supabase.from("profiles").delete().eq("id", profileId);
+    const { error: deleteProfileError } = await supabase
+      .from("profiles")
+      .delete()
+      .eq("id", profileId);
     if (deleteProfileError) {
       console.error("Error deleting profile:", deleteProfileError);
-      return NextResponse.json({ error: deleteProfileError.message || "Failed to delete profile" }, { status: 500 });
+      return NextResponse.json(
+        { error: deleteProfileError.message || "Failed to delete profile" },
+        { status: 500 },
+      );
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error in delete-member API:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }

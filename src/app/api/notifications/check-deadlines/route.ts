@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -79,10 +80,15 @@ export async function GET(req: NextRequest) {
       : null;
 
     const aseratIsDue =
-      !lastAseratDate || now.getTime() - lastAseratDate.getTime() > DUE_THRESHOLD_MS;
+      !lastAseratDate ||
+      now.getTime() - lastAseratDate.getTime() > DUE_THRESHOLD_MS;
     if (aseratIsDue) {
       const type = "due_aserat";
-      const alreadyNotified = await hasRecentNotification(supabase, userId, type);
+      const alreadyNotified = await hasRecentNotification(
+        supabase,
+        userId,
+        type,
+      );
       if (!alreadyNotified) {
         await supabase.from("notifications").insert({
           user_id: userId,
@@ -99,7 +105,8 @@ export async function GET(req: NextRequest) {
 
     // Gbir due: if no verified gbir payment for the current year
     const currentYear = now.getFullYear();
-    const { start: yearStart, end: yearEnd } = formatDateRangeForYear(currentYear);
+    const { start: yearStart, end: yearEnd } =
+      formatDateRangeForYear(currentYear);
 
     const { data: gbirPayments } = await supabase
       .from("donations")
@@ -114,7 +121,11 @@ export async function GET(req: NextRequest) {
     const gbirIsDue = !gbirPayments || gbirPayments.length === 0;
     if (gbirIsDue) {
       const type = "due_gbir";
-      const alreadyNotified = await hasRecentNotification(supabase, userId, type);
+      const alreadyNotified = await hasRecentNotification(
+        supabase,
+        userId,
+        type,
+      );
       if (!alreadyNotified) {
         await supabase.from("notifications").insert({
           user_id: userId,
@@ -150,10 +161,15 @@ export async function GET(req: NextRequest) {
         ? new Date(seletPayments[0].created_at)
         : new Date(selet.created_at);
 
-      const seletIsDue = now.getTime() - lastSeletDate.getTime() > DUE_THRESHOLD_MS;
+      const seletIsDue =
+        now.getTime() - lastSeletDate.getTime() > DUE_THRESHOLD_MS;
       if (seletIsDue) {
         const type = "due_selet";
-        const alreadyNotified = await hasRecentNotification(supabase, userId, type);
+        const alreadyNotified = await hasRecentNotification(
+          supabase,
+          userId,
+          type,
+        );
         if (!alreadyNotified) {
           await supabase.from("notifications").insert({
             user_id: userId,
@@ -171,6 +187,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: true, due: results });
   } catch (error) {
     console.error("check-deadlines error:", error);
-    return NextResponse.json({ error: "Failed to check deadlines" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to check deadlines" },
+      { status: 500 },
+    );
   }
 }

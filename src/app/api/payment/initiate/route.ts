@@ -8,25 +8,36 @@ export async function POST(req: NextRequest) {
   try {
     const token = req.headers.get("authorization")?.replace("Bearer ", "");
     const body = await req.json();
-    const { type, amount, first_name, last_name, email, selet_id, return_url } = body;
+    const { type, amount, first_name, last_name, email, selet_id, return_url } =
+      body;
 
-    if (!type || !amount) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
-    if (!["aserat", "selet", "gbir"].includes(type)) return NextResponse.json({ error: "Invalid type" }, { status: 400 });
+    if (!type || !amount)
+      return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+    if (!["aserat", "selet", "gbir"].includes(type))
+      return NextResponse.json({ error: "Invalid type" }, { status: 400 });
 
     // Validate required Chapa fields
     if (!first_name || !last_name || !email) {
-      return NextResponse.json({
-        error: "Missing required payment fields: first_name, last_name, email"
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          error:
+            "Missing required payment fields: first_name, last_name, email",
+        },
+        { status: 400 },
+      );
     }
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return NextResponse.json({ error: "Invalid email format" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid email format" },
+        { status: 400 },
+      );
     }
 
-    if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!token)
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -37,13 +48,16 @@ export async function POST(req: NextRequest) {
       data: { user },
       error: authErr,
     } = await supabase.auth.getUser(token);
-    if (authErr || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (authErr || !user)
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     // Generate a shorter tx_ref (max 50 chars for Chapa)
     // Format: type(6) + user_id_first8(8) + timestamp_last10(10) + random4(4) = ~28 chars
-    const userShort = user.id.substring(0, 8).replace(/-/g, '');
+    const userShort = user.id.substring(0, 8).replace(/-/g, "");
     const timestamp = Date.now().toString().slice(-10);
-    const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+    const random = Math.floor(Math.random() * 10000)
+      .toString()
+      .padStart(4, "0");
     let tx_ref = `${type}_${userShort}_${timestamp}_${random}`;
 
     // Ensure it doesn't exceed 50 characters
@@ -55,7 +69,10 @@ export async function POST(req: NextRequest) {
         tx_ref = tx_ref_short;
       } else {
         // Last resort: use minimal format
-        const minimalHash = user.id.split('-')[0] + Date.now().toString().slice(-8) + Math.floor(Math.random() * 9999);
+        const minimalHash =
+          user.id.split("-")[0] +
+          Date.now().toString().slice(-8) +
+          Math.floor(Math.random() * 9999);
         tx_ref = `${shortType}_${minimalHash}`.substring(0, 50);
       }
     }
@@ -77,7 +94,10 @@ export async function POST(req: NextRequest) {
     const secret = process.env.CHAPA_SECRET_KEY;
     if (!secret) {
       console.error("CHAPA_SECRET_KEY not set");
-      return NextResponse.json({ error: "Payment gateway not configured" }, { status: 500 });
+      return NextResponse.json(
+        { error: "Payment gateway not configured" },
+        { status: 500 },
+      );
     }
 
     const callback_url = `${process.env.NEXT_PUBLIC_BASE_URL || ""}/api/payment/verify?tx_ref=${encodeURIComponent(tx_ref)}`;
@@ -93,7 +113,10 @@ export async function POST(req: NextRequest) {
     };
 
     const resp = await axios.post(CHAPA_CHECKOUT_URL, payload, {
-      headers: { Authorization: `Bearer ${secret}`, "Content-Type": "application/json" },
+      headers: {
+        Authorization: `Bearer ${secret}`,
+        "Content-Type": "application/json",
+      },
       timeout: 15000,
     });
 
@@ -101,12 +124,21 @@ export async function POST(req: NextRequest) {
     const checkout_url = data?.data?.checkout_url || data?.checkout_url;
     if (!checkout_url) {
       console.error("Chapa response missing checkout_url", data);
-      return NextResponse.json({ error: "Payment provider did not return checkout URL", raw: data }, { status: 502 });
+      return NextResponse.json(
+        { error: "Payment provider did not return checkout URL", raw: data },
+        { status: 502 },
+      );
     }
 
     return NextResponse.json({ ok: true, checkout_url, tx_ref });
   } catch (err: any) {
-    console.error("initiate payment error:", err?.response?.data ?? err.message ?? err);
-    return NextResponse.json({ error: err?.response?.data ?? err.message ?? "Internal error" }, { status: 500 });
+    console.error(
+      "initiate payment error:",
+      err?.response?.data ?? err.message ?? err,
+    );
+    return NextResponse.json(
+      { error: err?.response?.data ?? err.message ?? "Internal error" },
+      { status: 500 },
+    );
   }
 }
