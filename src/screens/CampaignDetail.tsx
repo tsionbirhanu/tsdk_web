@@ -210,7 +210,7 @@ const CampaignDetail = () => {
       <div className="px-4 py-4 space-y-5 animate-fade-in">
         <div className="relative rounded-2xl overflow-hidden h-40">
           <img
-            src={campaign.image_url || crossIcon}
+            src={campaign.image_url || crossIcon.src}
             alt=""
             className="absolute inset-0 w-full h-full object-cover"
           />

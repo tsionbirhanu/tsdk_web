@@ -173,7 +173,7 @@ Be professional, accurate, and provide data-driven insights.${financialContext}`
       ];
       
       await streamChat({
-        messages: messagesWithContext,
+        messages: messagesWithContext as Message[],
         onDelta: upsertAssistant,
         onDone: () => setIsLoading(false),
       });

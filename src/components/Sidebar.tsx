@@ -93,7 +93,7 @@ export default function Sidebar() {
             <span className="font-medium truncate">{item.label}</span>
             {"badge" in item && item.badge && (
               <span className="ml-auto text-[9px] px-1.5 py-0.5 rounded-full bg-gold/20 text-gold">
-                {item.badge}
+                {item.badge as string}
               </span>
             )}
           </Link>

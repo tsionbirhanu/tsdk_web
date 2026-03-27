@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     // Upsert deadline for this user and type
     const { data, error } = await supabase
       .from("user_deadlines")
-      .upsert({ user_id: user.id, type, due_date }, { onConflict: ["user_id", "type"] });
+      .upsert({ user_id: user.id, type, due_date }, { onConflict: "user_id,type" });
 
     if (error) return NextResponse.json({ error }, { status: 500 });
     return NextResponse.json({ ok: true, data });
