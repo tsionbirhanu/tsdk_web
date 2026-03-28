@@ -25,8 +25,7 @@ supabase
     if (error) {
       console.error(
         "[Supabase] DB connection ERROR:",
-        error.message,
-        error.code,
+        error
       );
     } else {
       console.log(
