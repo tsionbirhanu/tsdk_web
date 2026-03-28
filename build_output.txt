@@ -1,0 +1,182 @@
+﻿  Γû▓ Next.js 14.2.35
+  - Environments: .env.local
+
+   Creating an optimized production build ...
+ Γ£ô Compiled successfully
+   Skipping linting
+   Checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/39) ...
+   Generating static pages (9/39) 
+[Supabase] Connecting to: https://kdyphydfqcpwoyoffbkl.supabase.co
+[Supabase] Connecting to: https://kdyphydfqcpwoyoffbkl.supabase.co
+[Supabase] Connecting to: https://kdyphydfqcpwoyoffbkl.supabase.co
+[Supabase] DB connected OK ΓÇö profiles table row count: 0
+[Supabase] Connecting to: https://kdyphydfqcpwoyoffbkl.supabase.co
+node.exe : verify error: 
+Dynamic server usage: 
+Route /api/payment/verify 
+couldn't be rendered 
+statically because it used 
+`request.url`. See more 
+info here: https://nextjs.o
+rg/docs/messages/dynamic-se
+rver-error
+At C:\Program 
+Files\nodejs\npx.ps1:29 
+char:3
++   & $NODE_EXE 
+$NPX_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~
+    + CategoryInfo         
+     : NotSpecified    : 
+(verify error: D.    
+..ic-server-error:S    
+tring) [], RemoteEx    
+ception
+    + FullyQualifiedErr    
+orId : NativeComman    
+dError
+ 
+[Supabase] DB connected OK ΓÇö profiles table row count: 0
+[Supabase] DB connected OK ΓÇö profiles table row count: 0
+[Supabase] DB connected OK ΓÇö profiles table row count: 0
+[Supabase] Connecting to: https://kdyphydfqcpwoyoffbkl.supabase.co
+[Supabase] DB connected OK ΓÇö profiles table row count: 0
+[Supabase] Connecting to: https://kdyphydfqcpwoyoffbkl.supabase.co
+[Supabase] DB connected OK ΓÇö profiles table row count: 0
+   Generating static pages (19/39) 
+[Supabase] Connecting to: https://kdyphydfqcpwoyoffbkl.supabase.co
+[Supabase] DB connected OK ΓÇö profiles table row count: 0
+   Generating static pages (29/39) 
+ Γ£ô Generating static pages (39/39)
+   Finalizing page optimization ...
+   Collecting build traces ...
+ ΓÜá Failed to copy traced 
+files for C:\Users\Hp\Deskt
+op\ts_proj\tsdk_web\.next\s
+erver\app\(dashboard)\page.
+js Error: ENOENT: no such 
+file or directory, 
+copyfile 'C:\Users\Hp\Deskt
+op\ts_proj\tsdk_web\.next\s
+erver\app\(dashboard)\page_
+client-reference-manifest.j
+s' -> 'C:\Users\Hp\Desktop\
+ts_proj\tsdk_web\.next\stan
+dalone\.next\server\app\(da
+shboard)\page_client-refere
+nce-manifest.js'
+    at async 
+Object.copyFile (node:inter
+nal/fs/promises:620:10)
+    at async C:\Users\Hp\De
+sktop\ts_proj\tsdk_web\node
+_modules\next\dist\build\ut
+ils.js:1409:21
+    at async Promise.all 
+(index 23)
+    at async 
+handleTraceFiles (C:\Users\
+Hp\Desktop\ts_proj\tsdk_web
+\node_modules\next\dist\bui
+ld\utils.js:1390:9)
+    at async 
+copyTracedFiles (C:\Users\H
+p\Desktop\ts_proj\tsdk_web\
+node_modules\next\dist\buil
+d\utils.js:1464:13)
+    at async C:\Users\Hp\De
+sktop\ts_proj\tsdk_web\node
+_modules\next\dist\build\in
+dex.js:224:9
+    at async 
+Span.traceAsyncFn (C:\Users
+\Hp\Desktop\ts_proj\tsdk_we
+b\node_modules\next\dist\tr
+ace\trace.js:154:20)
+    at async 
+writeStandaloneDirectory (C
+:\Users\Hp\Desktop\ts_proj\
+tsdk_web\node_modules\next\
+dist\build\index.js:223:5)
+    at async C:\Users\Hp\De
+sktop\ts_proj\tsdk_web\node
+_modules\next\dist\build\in
+dex.js:2143:17
+    at async 
+Span.traceAsyncFn (C:\Users
+\Hp\Desktop\ts_proj\tsdk_we
+b\node_modules\next\dist\tr
+ace\trace.js:154:20) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'copyfile',
+  path: 'C:\\Users\\Hp\\Des
+ktop\\ts_proj\\tsdk_web\\.n
+ext\\server\\app\\(dashboar
+d)\\page_client-reference-m
+anifest.js',
+  dest: 'C:\\Users\\Hp\\Des
+ktop\\ts_proj\\tsdk_web\\.n
+ext\\standalone\\.next\\ser
+ver\\app\\(dashboard)\\page
+_client-reference-manifest.
+js'
+}
+
+Route (app)                              Size     First Load JS
+Γöî Γùï /                                    45.3 kB         154 kB
+Γö£ Γùï /_not-found                          148 B          87.7 kB
+Γö£ Γùï /admin                               3.47 kB         253 kB
+Γö£ Γùï /admin/ai                            1.52 kB         194 kB
+Γö£ Γùï /admin/campaigns                     3.92 kB         158 kB
+Γö£ Γùï /admin/church                        2.37 kB        99.2 kB
+Γö£ Γùï /admin/events                        3.19 kB         157 kB
+Γö£ Γùï /admin/members                       3.24 kB         157 kB
+Γö£ Γùï /admin/reports                       2.3 kB          250 kB
+Γö£ Γùï /admin/roles                         2.73 kB         157 kB
+Γö£ Γùï /ai-chat                             40.2 kB         142 kB
+Γö£ ╞Æ /api/admin/delete-member             0 B                0 B
+Γö£ ╞Æ /api/campaigns                       0 B                0 B
+Γö£ ╞Æ /api/chat                            0 B                0 B
+Γö£ ╞Æ /api/chat/admin/caption              0 B                0 B
+Γö£ ╞Æ /api/chat/caption-generator          0 B                0 B
+Γö£ ╞Æ /api/chat/guest                      0 B                0 B
+Γö£ ╞Æ /api/chat/member                     0 B                0 B
+Γö£ ╞Æ /api/chat/member/history             0 B                0 B
+Γö£ ╞Æ /api/chat/member/session             0 B                0 B
+Γö£ ╞Æ /api/chat/treasurer                  0 B                0 B
+Γö£ ╞Æ /api/chat/treasurer/history          0 B                0 B
+Γö£ ╞Æ /api/chat/treasurer/session          0 B                0 B
+Γö£ ╞Æ /api/notifications/check-deadlines   0 B                0 B
+Γö£ ╞Æ /api/notifications/deadline          0 B                0 B
+Γö£ ╞Æ /api/payment/create-checkout         0 B                0 B
+Γö£ ╞Æ /api/payment/initiate                0 B                0 B
+Γö£ ╞Æ /api/payment/verify                  0 B                0 B
+Γö£ Γùï /aserat                              7.81 kB         178 kB
+Γö£ Γùï /auth                                4.76 kB         164 kB
+Γö£ Γùï /dashboard                           6.85 kB         166 kB
+Γö£ Γùï /donate                              23 kB           190 kB
+Γö£ ╞Æ /donate/[id]                         9.28 kB         180 kB
+Γö£ Γùï /gbir                                6.87 kB         178 kB
+Γö£ Γùï /history                             4.48 kB         158 kB
+Γö£ Γùï /notifications                       4.99 kB         163 kB
+Γö£ Γùï /profile                             7.67 kB         176 kB
+Γö£ Γùï /selet                               12.5 kB         192 kB
+Γö£ Γùï /treasurer                           2.54 kB         248 kB
+Γö£ Γùï /treasurer/ai                        6.1 kB          167 kB
+Γö£ Γùï /treasurer/campaigns                 2.64 kB         157 kB
+Γö£ Γùï /treasurer/payments                  3.86 kB         158 kB
+Γö£ Γùï /treasurer/reports                   1.95 kB         256 kB
+Γöö Γùï /treasurer/transactions              2.53 kB         147 kB
++ First Load JS shared by all            87.6 kB
+  Γö£ chunks/2117-740e93c1478fd54e.js      31.9 kB
+  Γö£ chunks/fd9d1056-963fcafffd1beda3.js  53.6 kB
+  Γöö other shared chunks (total)          2.01 kB
+
+
+Γùï  (Static)   prerendered as static content
+╞Æ  (Dynamic)  server-rendered on demand
+

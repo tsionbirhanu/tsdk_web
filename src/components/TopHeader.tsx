@@ -82,6 +82,7 @@
 
 "use client";
 
+import { useState, useEffect } from "react";
 import { Bell, Search } from "lucide-react";
 import { useI18n, Language } from "@/lib/i18n";
 import { useRouter } from "next/navigation";
@@ -92,6 +93,17 @@ const langLabels: Record<Language, string> = {
   am: "አማርኛ",
   om: "Oromiffa",
 };
+
+function getGreeting(): string {
+  const currentHour = new Date().getHours();
+  if (currentHour < 12) {
+    return "Good Morning";
+  } else if (currentHour < 18) {
+    return "Good Afternoon";
+  } else {
+    return "Good Evening";
+  }
+}
 
 export default function TopHeader() {
   const { lang, setLang, t } = useI18n();
@@ -108,16 +120,20 @@ export default function TopHeader() {
     ? "Treasurer"
     : "Member";
 
-  // Dynamic greeting based on the time of day
-  const currentHour = new Date().getHours();
-  let greeting = "Hello";
-  if (currentHour < 12) {
-    greeting = "Good Morning";
-  } else if (currentHour < 18) {
-    greeting = "Good Afternoon";
-  } else {
-    greeting = "Good Evening";
-  }
+  // Dynamic greeting based on the client's local time, updates every minute
+  const [greeting, setGreeting] = useState("Hello");
+
+  useEffect(() => {
+    // Set the correct greeting immediately on mount (client-side)
+    setGreeting(getGreeting());
+
+    // Update every minute so it stays accurate
+    const interval = setInterval(() => {
+      setGreeting(getGreeting());
+    }, 60_000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <header className="sticky top-0 z-40 bg-white backdrop-blur-md border-b border-border">

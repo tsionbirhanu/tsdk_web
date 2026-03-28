@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import AppHeader from "@/components/AppHeader";
 import { useParams, useRouter } from "next/navigation";

@@ -1,0 +1,94 @@
+﻿src/app/api/chat/treasurer/route.ts(29,42): error TS7006: Parameter 'sum' implicitly has an 'any' type.
+src/app/api/chat/treasurer/route.ts(29,47): error TS7006: Parameter 'd' implicitly has an 'any' type.
+src/components/Sidebar.tsx(94,13): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/screens/AseratPage.tsx(90,9): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(input: string | Request | URL, init?: RequestInit | undefined): Promise<Response>', gave the following error.
+    Type '{ 'Content-Type': string; } & ({ Authorization: string; } | { Authorization?: undefined; })' is not assignable to type 'HeadersInit | undefined'.
+      Type '{ 'Content-Type': string; } & { Authorization?: undefined; }' is not assignable to type 'HeadersInit | undefined'.
+        Type '{ 'Content-Type': string; } & { Authorization?: undefined; }' is not assignable to type 'Record<string, string>'.
+          Property 'Authorization' is incompatible with index signature.
+            Type 'undefined' is not assignable to type 'string'.
+  Overload 2 of 2, '(input: URL | RequestInfo, init?: RequestInit | undefined): Promise<Response>', gave the following error.
+    Type '{ 'Content-Type': string; } & ({ Authorization: string; } | { Authorization?: undefined; })' is not assignable to type 'HeadersInit | undefined'.
+      Type '{ 'Content-Type': string; } & { Authorization?: undefined; }' is not assignable to type 'HeadersInit | undefined'.
+        Type '{ 'Content-Type': string; } & { Authorization?: undefined; }' is not assignable to type 'Record<string, string>'.
+          Property 'Authorization' is incompatible with index signature.
+            Type 'undefined' is not assignable to type 'string'.
+src/screens/AseratPage.tsx(152,9): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(input: string | Request | URL, init?: RequestInit | undefined): Promise<Response>', gave the following error.
+    Type '{ 'Content-Type': string; } & ({ Authorization: string; } | { Authorization?: undefined; })' is not assignable to type 'HeadersInit | undefined'.
+      Type '{ 'Content-Type': string; } & { Authorization?: undefined; }' is not assignable to type 'HeadersInit | undefined'.
+        Type '{ 'Content-Type': string; } & { Authorization?: undefined; }' is not assignable to type 'Record<string, string>'.
+          Property 'Authorization' is incompatible with index signature.
+            Type 'undefined' is not assignable to type 'string'.
+  Overload 2 of 2, '(input: URL | RequestInfo, init?: RequestInit | undefined): Promise<Response>', gave the following error.
+    Type '{ 'Content-Type': string; } & ({ Authorization: string; } | { Authorization?: undefined; })' is not assignable to type 'HeadersInit | undefined'.
+      Type '{ 'Content-Type': string; } & { Authorization?: undefined; }' is not assignable to type 'HeadersInit | undefined'.
+        Type '{ 'Content-Type': string; } & { Authorization?: undefined; }' is not assignable to type 'Record<string, string>'.
+          Property 'Authorization' is incompatible with index signature.
+            Type 'undefined' is not assignable to type 'string'.
+src/screens/CampaignDetail.tsx(126,9): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(input: string | Request | URL, init?: RequestInit | undefined): Promise<Response>', gave the following error.
+    Type '{ 'Content-Type': string; } & ({ Authorization: string; } | { Authorization?: undefined; })' is not assignable to type 'HeadersInit | undefined'.
+      Type '{ 'Content-Type': string; } & { Authorization?: undefined; }' is not assignable to type 'HeadersInit | undefined'.
+        Type '{ 'Content-Type': string; } & { Authorization?: undefined; }' is not assignable to type 'Record<string, string>'.
+          Property 'Authorization' is incompatible with index signature.
+            Type 'undefined' is not assignable to type 'string'.
+  Overload 2 of 2, '(input: URL | RequestInfo, init?: RequestInit | undefined): Promise<Response>', gave the following error.
+    Type '{ 'Content-Type': string; } & ({ Authorization: string; } | { Authorization?: undefined; })' is not assignable to type 'HeadersInit | undefined'.
+      Type '{ 'Content-Type': string; } & { Authorization?: undefined; }' is not assignable to type 'HeadersInit | undefined'.
+        Type '{ 'Content-Type': string; } & { Authorization?: undefined; }' is not assignable to type 'Record<string, string>'.
+          Property 'Authorization' is incompatible with index signature.
+            Type 'undefined' is not assignable to type 'string'.
+src/screens/GbirPage.tsx(103,9): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(input: string | Request | URL, init?: RequestInit | undefined): Promise<Response>', gave the following error.
+    Type '{ 'Content-Type': string; } & ({ Authorization: string; } | { Authorization?: undefined; })' is not assignable to type 'HeadersInit | undefined'.
+      Type '{ 'Content-Type': string; } & { Authorization?: undefined; }' is not assignable to type 'HeadersInit | undefined'.
+        Type '{ 'Content-Type': string; } & { Authorization?: undefined; }' is not assignable to type 'Record<string, string>'.
+          Property 'Authorization' is incompatible with index signature.
+            Type 'undefined' is not assignable to type 'string'.
+  Overload 2 of 2, '(input: URL | RequestInfo, init?: RequestInit | undefined): Promise<Response>', gave the following error.
+    Type '{ 'Content-Type': string; } & ({ Authorization: string; } | { Authorization?: undefined; })' is not assignable to type 'HeadersInit | undefined'.
+      Type '{ 'Content-Type': string; } & { Authorization?: undefined; }' is not assignable to type 'HeadersInit | undefined'.
+        Type '{ 'Content-Type': string; } & { Authorization?: undefined; }' is not assignable to type 'Record<string, string>'.
+          Property 'Authorization' is incompatible with index signature.
+            Type 'undefined' is not assignable to type 'string'.
+src/screens/SeletPage.tsx(94,9): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(input: string | Request | URL, init?: RequestInit | undefined): Promise<Response>', gave the following error.
+    Type '{ 'Content-Type': string; } & ({ Authorization: string; } | { Authorization?: undefined; })' is not assignable to type 'HeadersInit | undefined'.
+      Type '{ 'Content-Type': string; } & { Authorization?: undefined; }' is not assignable to type 'HeadersInit | undefined'.
+        Type '{ 'Content-Type': string; } & { Authorization?: undefined; }' is not assignable to type 'Record<string, string>'.
+          Property 'Authorization' is incompatible with index signature.
+            Type 'undefined' is not assignable to type 'string'.
+  Overload 2 of 2, '(input: URL | RequestInfo, init?: RequestInit | undefined): Promise<Response>', gave the following error.
+    Type '{ 'Content-Type': string; } & ({ Authorization: string; } | { Authorization?: undefined; })' is not assignable to type 'HeadersInit | undefined'.
+      Type '{ 'Content-Type': string; } & { Authorization?: undefined; }' is not assignable to type 'HeadersInit | undefined'.
+        Type '{ 'Content-Type': string; } & { Authorization?: undefined; }' is not assignable to type 'Record<string, string>'.
+          Property 'Authorization' is incompatible with index signature.
+            Type 'undefined' is not assignable to type 'string'.
+src/screens/SeletPage.tsx(118,13): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(input: string | Request | URL, init?: RequestInit | undefined): Promise<Response>', gave the following error.
+    Type '{ 'Content-Type': string; } & ({ Authorization: string; } | { Authorization?: undefined; })' is not assignable to type 'HeadersInit | undefined'.
+      Type '{ 'Content-Type': string; } & { Authorization?: undefined; }' is not assignable to type 'HeadersInit | undefined'.
+        Type '{ 'Content-Type': string; } & { Authorization?: undefined; }' is not assignable to type 'Record<string, string>'.
+          Property 'Authorization' is incompatible with index signature.
+            Type 'undefined' is not assignable to type 'string'.
+  Overload 2 of 2, '(input: URL | RequestInfo, init?: RequestInit | undefined): Promise<Response>', gave the following error.
+    Type '{ 'Content-Type': string; } & ({ Authorization: string; } | { Authorization?: undefined; })' is not assignable to type 'HeadersInit | undefined'.
+      Type '{ 'Content-Type': string; } & { Authorization?: undefined; }' is not assignable to type 'HeadersInit | undefined'.
+        Type '{ 'Content-Type': string; } & { Authorization?: undefined; }' is not assignable to type 'Record<string, string>'.
+          Property 'Authorization' is incompatible with index signature.
+            Type 'undefined' is not assignable to type 'string'.
+src/screens/SeletPage.tsx(177,9): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(input: string | Request | URL, init?: RequestInit | undefined): Promise<Response>', gave the following error.
+    Type '{ 'Content-Type': string; } & ({ Authorization: string; } | { Authorization?: undefined; })' is not assignable to type 'HeadersInit | undefined'.
+      Type '{ 'Content-Type': string; } & { Authorization?: undefined; }' is not assignable to type 'HeadersInit | undefined'.
+        Type '{ 'Content-Type': string; } & { Authorization?: undefined; }' is not assignable to type 'Record<string, string>'.
+          Property 'Authorization' is incompatible with index signature.
+            Type 'undefined' is not assignable to type 'string'.
+  Overload 2 of 2, '(input: URL | RequestInfo, init?: RequestInit | undefined): Promise<Response>', gave the following error.
+    Type '{ 'Content-Type': string; } & ({ Authorization: string; } | { Authorization?: undefined; })' is not assignable to type 'HeadersInit | undefined'.
+      Type '{ 'Content-Type': string; } & { Authorization?: undefined; }' is not assignable to type 'HeadersInit | undefined'.
+        Type '{ 'Content-Type': string; } & { Authorization?: undefined; }' is not assignable to type 'Record<string, string>'.
+          Property 'Authorization' is incompatible with index signature.
+            Type 'undefined' is not assignable to type 'string'.
