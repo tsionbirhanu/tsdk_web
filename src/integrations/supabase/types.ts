@@ -110,6 +110,7 @@ export type Database = {
           campaign_id: string | null
           created_at: string
           id: string
+          is_anonymous: boolean
           notes: string | null
           receipt_url: string | null
           status: string
@@ -123,6 +124,7 @@ export type Database = {
           campaign_id?: string | null
           created_at?: string
           id?: string
+          is_anonymous?: boolean
           notes?: string | null
           receipt_url?: string | null
           status?: string
@@ -136,6 +138,7 @@ export type Database = {
           campaign_id?: string | null
           created_at?: string
           id?: string
+          is_anonymous?: boolean
           notes?: string | null
           receipt_url?: string | null
           status?: string

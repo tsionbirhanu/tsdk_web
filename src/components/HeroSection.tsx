@@ -1,10 +1,40 @@
+"use client";
+
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const HeroSection = () => {
+  const { data: availableCampaignsCount = 0 } = useQuery({
+    queryKey: ["available-campaigns-count"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("campaigns")
+        .select("goal_amount, raised_amount, status");
+
+      if (error) throw error;
+
+      const available = (data || []).filter((campaign) => {
+        const goal = Number(campaign.goal_amount || 0);
+        const raised = Number(campaign.raised_amount || 0);
+        const status = (campaign.status || "").toLowerCase();
+
+        if (status === "paused") return false;
+        if (goal > 0 && raised >= goal) return false;
+        return true;
+      });
+
+      return available.length;
+    },
+  });
+
+  const campaignBadge = availableCampaignsCount > 0 ? `${availableCampaignsCount}+` : "0";
+
   return (
     <main className="relative flex min-h-screen items-center justify-between w-full px-12 pt-24 gap-16">
       {/* Left Content (logo + flexible text) */}
@@ -58,15 +88,32 @@ const HeroSection = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.9 }}
             className="mt-8 flex flex-col sm:flex-row gap-4">
-            <Link href="/auth">
-              <Button className="bg-[#8b5829] hover:bg-[#6d4620] text-white px-8 py-3 rounded-full shadow-md w-full sm:w-auto">
-                Get Started
-              </Button>
-            </Link>
+            <motion.div
+              animate={{ scale: [1, 1.04, 1], y: [0, -2, 0] }}
+              transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut" }}
+              whileHover={{ scale: 1.06 }}
+              whileTap={{ scale: 0.95 }}
+              className="relative inline-block group">
+              <span className="pointer-events-none absolute -inset-1 rounded-full border border-[#8b5829]/45 animate-ping" />
+              <span className="pointer-events-none absolute -inset-1 rounded-full border border-[#8b5829]/35" />
+
+              <Link href="/donate" className="relative block">
+                <Button className="bg-[#8b5829] hover:bg-[#6d4620] text-white px-8 py-3 rounded-full shadow-md w-full sm:w-auto relative">
+                  <span className="flex items-center gap-2">
+                    <Heart className="w-4 h-4 transition-transform duration-700 group-hover:rotate-[360deg]" />
+                    Donate Now
+                  </span>
+                </Button>
+
+                <span className="absolute -top-2 -right-2 rounded-full bg-white text-[#8b5829] text-[10px] font-bold px-2 py-0.5 shadow-sm border border-[#e6d6c4]">
+                  {campaignBadge}
+                </span>
+              </Link>
+            </motion.div>
             <Link href="#how-it-works">
               <Button
                 variant="outline"
-                className="bg-white/80 text-[#3b2411] border border-[#d8c7aa] hover:bg-[#fdf7ec] px-8 py-3 rounded-full w-full sm:w-auto">
+                className="bg-white/80 text-[#3b2411] border border-[#d8c7aa] hover:bg-[#8b5829] px-8 py-3 rounded-full w-full sm:w-auto mx-5">
                 Learn More
               </Button>
             </Link>

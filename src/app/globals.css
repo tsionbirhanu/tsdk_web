@@ -119,6 +119,22 @@
 }
 
 @layer utilities {
+  @keyframes glow-breathe {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgba(122, 74, 36, 0.2), 0 6px 14px rgba(122, 74, 36, 0.18);
+      transform: scale(1);
+    }
+    50% {
+      box-shadow: 0 0 0 6px rgba(122, 74, 36, 0.08), 0 10px 24px rgba(122, 74, 36, 0.28);
+      transform: scale(1.03);
+    }
+  }
+
+  .glow-breathe {
+    animation: glow-breathe 2.2s ease-in-out infinite;
+  }
+
   .glass-card {
     @apply bg-card/70 backdrop-blur-md border border-border/40 shadow-lg;
   }

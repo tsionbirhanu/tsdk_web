@@ -8,12 +8,22 @@ export async function POST(req: NextRequest) {
   try {
     const token = req.headers.get("authorization")?.replace("Bearer ", "");
     const body = await req.json();
-    const { type, amount, first_name, last_name, email, selet_id, return_url } =
-      body;
+    const {
+      type,
+      amount,
+      first_name,
+      last_name,
+      email,
+      selet_id,
+      campaign_id,
+      return_url,
+      is_anonymous,
+      donor_name,
+    } = body;
 
     if (!type || !amount)
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
-    if (!["aserat", "selet", "gbir"].includes(type))
+    if (!["donation", "aserat", "selet", "gbir"].includes(type))
       return NextResponse.json({ error: "Invalid type" }, { status: 400 });
 
     // Validate required Chapa fields
@@ -83,6 +93,13 @@ export async function POST(req: NextRequest) {
       amount: Number(amount),
       type,
       status: "initiated",
+      campaign_id: campaign_id || null,
+      is_anonymous: Boolean(is_anonymous),
+      notes: donor_name
+        ? `Donor: ${donor_name}`
+        : Boolean(is_anonymous)
+          ? "Donor: Anonymous"
+          : null,
       tx_ref,
       selet_id: selet_id || null,
     });

@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/hooks/useAuth";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import Sidebar from "@/components/Sidebar";
 import TopHeader from "@/components/TopHeader";
@@ -13,21 +13,27 @@ export default function DashboardLayout({
 }) {
   const { user, loading, roles } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   const isEthiopianTheme = roles.includes('admin') || roles.includes('treasurer') || roles.includes('member');
+  const isPublicDonateRoute = pathname.startsWith("/donate");
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!loading && !user && !isPublicDonateRoute) {
       router.replace("/auth");
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, isPublicDonateRoute]);
 
-  if (loading) {
+  if (loading && !isPublicDonateRoute) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full" />
       </div>
     );
+  }
+
+  if (!user && isPublicDonateRoute) {
+    return <main className="min-h-screen bg-background">{children}</main>;
   }
 
   if (!user) return null;
