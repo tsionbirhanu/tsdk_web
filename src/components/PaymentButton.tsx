@@ -30,7 +30,8 @@ export default function PaymentButton({
 
   const handlePay = async () => {
     try {
-      if (disabled) throw new Error("Payment disabled: missing required fields");
+      if (disabled)
+        throw new Error("Payment disabled: missing required fields");
       setLoading(true);
       const tx_ref = `tx_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
 
@@ -45,13 +46,17 @@ export default function PaymentButton({
         return_url: returnUrl,
       });
 
-      const checkout_url = res.data?.checkout_url || res.data?.data?.checkout_url;
+      const checkout_url =
+        res.data?.checkout_url || res.data?.data?.checkout_url;
       if (!checkout_url) throw new Error("No checkout URL returned");
 
       // Redirect to Chapa checkout
       window.location.assign(checkout_url);
     } catch (err: any) {
-      console.error("Payment init error:", err?.response?.data ?? err.message ?? err);
+      console.error(
+        "Payment init error:",
+        err?.response?.data ?? err.message ?? err,
+      );
       alert(err?.response?.data?.error || err?.message || "Payment failed");
     } finally {
       setLoading(false);

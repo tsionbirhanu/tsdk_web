@@ -29,24 +29,30 @@ const AuthPage = () => {
           password,
         });
         if (error) throw error;
+
+        // Fetch user's profile to get role and determine redirect URL
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("user_id", data.user?.id)
+          .single();
+
+        const role = profileData?.role || "member";
         toast.success("Welcome back!");
 
-        if (data.user) {
-          const { data: roleData } = await supabase
-            .from("user_roles")
-            .select("role")
-            .eq("user_id", data.user.id);
-
-          const userRoles = roleData?.map((r) => r.role) || [];
-          if (userRoles.includes("admin")) {
-            router.push("/admin");
-          } else if (userRoles.includes("treasurer")) {
-            router.push("/treasurer");
-          } else {
-            router.push("/dashboard");
-          }
+        // Redirect directly to role-specific dashboard (no intermediate redirects)
+        if (role === "system_admin" || role === "admin") {
+          router.push("/dashboard/admin");
+        } else if (role === "teklay_bete_khnet") {
+          router.push("/dashboard/teklay-bete-khnet");
+        } else if (role === "hagere_sebket") {
+          router.push("/dashboard/hagere-sebket");
+        } else if (role === "church_admin") {
+          router.push("/dashboard/church-admin");
+        } else if (role === "treasurer") {
+          router.push("/dashboard/treasurer");
         } else {
-          router.push("/dashboard");
+          router.push("/dashboard/member");
         }
       } else {
         const { error } = await supabase.auth.signUp({

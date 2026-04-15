@@ -79,7 +79,6 @@
 //   );
 // }
 
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -108,17 +107,31 @@ function getGreeting(): string {
 export default function TopHeader() {
   const { lang, setLang, t } = useI18n();
   const router = useRouter();
-  const { user, roles } = useAuth();
+  const { user, profile, hasRole } = useAuth();
   const langs: Language[] = ["en", "am", "om"];
 
   const displayName =
-    user?.user_metadata?.full_name || user?.email?.split("@")[0] || "User";
+    profile?.full_name || user?.email?.split("@")[0] || "User";
   const initials = displayName.slice(0, 2).toUpperCase();
-  const roleLabel = roles.includes("admin")
-    ? "Admin"
-    : roles.includes("treasurer")
-    ? "Treasurer"
-    : "Member";
+
+  // Check roles with proper role names
+  const isSystemAdmin = hasRole("system_admin") || hasRole("admin");
+  const isTeklayAdmin = hasRole("teklay_bete_khnet");
+  const isHagereAdmin = hasRole("hagere_sebket");
+  const isChurchAdmin = hasRole("church_admin");
+  const isTreasurer = hasRole("treasurer");
+
+  const roleLabel = isSystemAdmin
+    ? "System Admin"
+    : isTeklayAdmin
+      ? "Teklay Admin"
+      : isHagereAdmin
+        ? "Hagere Admin"
+        : isChurchAdmin
+          ? "Church Admin"
+          : isTreasurer
+            ? "Treasurer"
+            : "Member";
 
   // Dynamic greeting based on the client's local time, updates every minute
   const [greeting, setGreeting] = useState("Hello");
@@ -135,6 +148,13 @@ export default function TopHeader() {
     return () => clearInterval(interval);
   }, []);
 
+  const isAnyAdmin =
+    isSystemAdmin ||
+    isTeklayAdmin ||
+    isHagereAdmin ||
+    isChurchAdmin ||
+    isTreasurer;
+
   return (
     <header className="sticky top-0 z-40 bg-white backdrop-blur-md border-b border-border">
       <div className="flex items-center justify-between px-6 py-3">
@@ -148,7 +168,7 @@ export default function TopHeader() {
         {/* Right side - Search, Language Selector, Notifications, Profile */}
         <div className="flex items-center gap-3">
           {/* Search bar (only for non-admins) */}
-          {!roles.includes("admin") && (
+          {!isAnyAdmin && (
             <div className="flex-1 max-w-sm">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -170,8 +190,7 @@ export default function TopHeader() {
           <select
             value={lang}
             onChange={(e) => setLang(e.target.value as Language)}
-            className="px-2 py-1.5 rounded-lg bg-secondary border border-border text-xs text-foreground focus:outline-none"
-          >
+            className="px-2 py-1.5 rounded-lg bg-secondary border border-border text-xs text-foreground focus:outline-none">
             {langs.map((l) => (
               <option key={l} value={l}>
                 {langLabels[l]}
@@ -182,8 +201,7 @@ export default function TopHeader() {
           {/* Notifications */}
           <button
             onClick={() => router.push("/notifications")}
-            className="relative p-2 rounded-lg hover:bg-secondary transition-colors"
-          >
+            className="relative p-2 rounded-lg hover:bg-secondary transition-colors">
             <Bell className="w-4 h-4 text-foreground" />
             <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-accent rounded-full" />
           </button>
@@ -191,10 +209,11 @@ export default function TopHeader() {
           {/* Profile */}
           <button
             onClick={() => router.push("/profile")}
-            className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-secondary transition-colors"
-          >
+            className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-secondary transition-colors">
             <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center">
-              <span className="text-xs font-semibold text-primary">{initials}</span>
+              <span className="text-xs font-semibold text-primary">
+                {initials}
+              </span>
             </div>
             <span className="text-sm font-medium text-foreground hidden lg:block">
               {displayName}
