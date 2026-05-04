@@ -1,50 +1,33 @@
-﻿"use client";
+"use client";
 
-import Image from "next/image";
+import AppHeader from "@/components/AppHeader";
 import { useI18n } from "@/lib/i18n";
-import {
-  Heart,
-  BookOpen,
-  Church,
-  TrendingUp,
-  ArrowRight,
-  Calendar,
-  CreditCard,
-} from "lucide-react";
-import { useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Heart, BookOpen, Church, TrendingUp, ArrowRight, CheckCircle, CreditCard } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import heroBg from "@/assets/church-banner.jpg";
-import patternBg from "@/assets/pattern-bg.jpg";
 
 const Dashboard = () => {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const router = useRouter();
-  const { user, session } = useAuth();
+  const { user } = useAuth();
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("user_id", user!.id)
-        .single();
-      return data; //
+      const { data } = await supabase.from("profiles").select("*").eq("id", user!.id).single();
+      return data;
     },
     enabled: !!user,
   });
 
   const { data: donations = [] } = useQuery({
-    queryKey: ["my-donations", user?.id],
+    queryKey: ["donations", user?.id],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("donations")
-        .select("*")
-        .eq("user_id", user!.id)
-        .order("created_at", { ascending: false });
+      const { data } = await supabase.from("donations").select("*").eq("user_id", user!.id).order("created_at", { ascending: false });
       return data || [];
     },
     enabled: !!user,
@@ -53,323 +36,264 @@ const Dashboard = () => {
   const { data: campaigns = [] } = useQuery({
     queryKey: ["campaigns"],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("campaigns")
-        .select("id, title, goal_amount, raised_amount, status, created_at, updated_at");
+      const { data } = await supabase.from("campaigns").select("*").eq("status", "active").limit(4);
       return data || [];
     },
   });
 
-  // Derive a "real" status for each campaign based on raised vs goal and DB status
-  const campaignsWithStatus = (campaigns as any[]).map((c) => {
-    const goal = Number(c.goal_amount || 0);
-    const raised = Number(c.raised_amount || 0);
-    let realStatus = c.status || "active";
-
-    if (goal > 0 && raised >= goal) {
-      realStatus = "funded";
-    }
-
-    if (c.status && (c.status === "closed" || c.status === "archived")) {
-      realStatus = c.status;
-    }
-
-    return { ...c, realStatus };
-  });
-
   const { data: selets = [] } = useQuery({
-    queryKey: ["my-selets", user?.id],
+    queryKey: ["selets", user?.id],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("selets")
-        .select("*")
-        .eq("user_id", user!.id)
-        .eq("status", "active");
+      const { data } = await supabase.from("selets").select("*").eq("user_id", user!.id).limit(3);
       return data || [];
     },
     enabled: !!user,
   });
 
-  // Ensure deadline reminders are generated for this member
-  useEffect(() => {
-    if (!user?.id || !session?.access_token) return;
-
-    const checkDeadlines = async () => {
-      try {
-        await fetch("/api/notifications/check-deadlines", {
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-          },
-        });
-      } catch (error) {
-        // ignore errors; notifications are best-effort
-        console.error("Failed to check deadlines", error);
-      }
-    };
-
-    checkDeadlines();
-  }, [user?.id, session?.access_token]);
-
   const totalDonated = donations
     .filter((d: any) => d.status === "verified")
     .reduce((s: number, d: any) => s + Number(d.amount), 0);
+
   const totalAserat = donations
     .filter((d: any) => d.type === "aserat" && d.status === "verified")
     .reduce((s: number, d: any) => s + Number(d.amount), 0);
 
-  const stats = [
-    {
-      label: t("dash.totalDonated"),
-      value: totalDonated.toLocaleString(),
-      icon: Heart,
-      accent: "text-primary",
-    },
-    {
-      label: t("dash.campaigns"),
-      value: String(campaignsWithStatus.filter((c: any) => c.realStatus === "active").length),
-      icon: TrendingUp,
-      accent: "text-accent",
-    },
-    {
-      label: t("dash.aserat"),
-      value: totalAserat.toLocaleString(),
-      icon: BookOpen,
-      accent: "text-success",
-    },
-    {
-      label: t("dash.selet"),
-      value: String(selets.length),
-      icon: Church,
-      accent: "text-primary",
-    },
-  ];
-
-  const quickActions = [
-    { label: t("nav.donate"), icon: Heart, path: "/donate" },
-    { label: t("nav.aserat"), icon: BookOpen, path: "/aserat" },
-    { label: t("nav.selet"), icon: Church, path: "/selet" },
-    { label: t("nav.gbir"), icon: CreditCard, path: "/gbir" },
-  ];
-
+  const totalVows = selets.length;
+  const activeCampaigns = campaigns.length;
   const recentDonations = donations.slice(0, 5);
 
   return (
-    <div className="animate-fade-in bg-white">
-      <div className="relative h-64 overflow-hidden">
-        <Image src={heroBg} alt="" fill className="object-cover" />
-        <div className="absolute inset-0 bg-overlay-dark" />
-        <div className="relative z-10 flex flex-col justify-end h-full p-8">
-          <p className="text-sm text-white font-ethiopic">
-            {t("dash.welcome")}
-          </p>
-          <h2 className="text-3xl font-heading font-bold text-[#E0C7B7] mt-1">
-            {profile?.full_name || user?.email?.split("@")[0] || "Member"}
-          </h2>
-          <p className="text-sm text-white mt-2">
-            {t("dash.memberSince")}{" "}
-            {profile?.member_since || new Date().getFullYear()}
-          </p>
-        </div>
-      </div>
+    <div className="min-h-screen bg-[#e8e0d5]">
+      <AppHeader title={lang === "am" ? "ውቁ" : "Dashboard"} showControls={true} />
 
-      <div className="p-8 space-y-8">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {stats.map((stat) => (
-            <div
-              key={stat.label}
-              className="glass-card rounded-xl p-6 gold-glow">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <stat.icon className={`w-5 h-5 ${stat.accent}`} />
-                </div>
-                <span className="text-sm text-muted-foreground">
-                  {stat.label}
-                </span>
+      <div className="px-4 py-6 space-y-6 max-w-6xl mx-auto animate-fade-in">
+        {profile && (
+          <div className="rounded-2xl border border-border/40 bg-card/50 backdrop-blur-sm p-6">
+            <div className="flex items-start justify-between">
+              <div>
+                <h1 className="text-3xl font-heading font-bold text-foreground">
+                  {lang === "am" ? "ሰላም" : "Welcome back"}, {profile.full_name}
+                </h1>
+                <p className="text-sm text-muted-foreground mt-2">
+                  {lang === "am" ? "አባላት" : "Member since"}{" "}
+                  {new Date(profile.created_at).toLocaleDateString(lang === "am" ? "am-ET" : "en-US", {
+                    year: "numeric",
+                    month: "long",
+                  })}
+                </p>
               </div>
-              <p className="text-2xl font-heading font-bold text-foreground">
-                {stat.value}{" "}
-                <span className="text-sm font-sans font-normal text-muted-foreground">
-                  {t("common.birr")}
-                </span>
+            </div>
+          </div>
+        )}
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="rounded-2xl border border-border/40 bg-card/50 backdrop-blur-sm p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 rounded-lg bg-rose-500/10">
+                <Heart className="w-5 h-5 text-rose-500" />
+              </div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">
+                {lang === "am" ? "ጠቅላላ ሰጥቷል" : "Total Given"}
               </p>
             </div>
-          ))}
+            <p className="text-2xl font-bold text-foreground">{totalDonated.toLocaleString()}</p>
+          </div>
+
+          <div className="rounded-2xl border border-border/40 bg-card/50 backdrop-blur-sm p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 rounded-lg bg-blue-500/10">
+                <BookOpen className="w-5 h-5 text-blue-500" />
+              </div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">
+                {lang === "am" ? "ደወል" : "Aserat"}
+              </p>
+            </div>
+            <p className="text-2xl font-bold text-foreground">{totalAserat.toLocaleString()}</p>
+          </div>
+
+          <div className="rounded-2xl border border-border/40 bg-card/50 backdrop-blur-sm p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 rounded-lg bg-purple-500/10">
+                <Church className="w-5 h-5 text-purple-500" />
+              </div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">
+                {lang === "am" ? "ጸሎቶች" : "Vows"}
+              </p>
+            </div>
+            <p className="text-2xl font-bold text-foreground">{totalVows}</p>
+          </div>
+
+          <div className="rounded-2xl border border-border/40 bg-card/50 backdrop-blur-sm p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 rounded-lg bg-amber-500/10">
+                <TrendingUp className="w-5 h-5 text-amber-500" />
+              </div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">
+                {lang === "am" ? "ቅስቃሴ" : "Campaigns"}
+              </p>
+            </div>
+            <p className="text-2xl font-bold text-foreground">{activeCampaigns}</p>
+          </div>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-8">
-            <div>
-              <h3 className="text-lg font-heading font-semibold text-foreground mb-4">
-                {t("dash.quickActions")}
-              </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {quickActions.map((action) => (
-                  <button
-                    key={action.path}
-                    onClick={() => router.push(action.path)}
-                    className="flex flex-col items-center gap-3 p-6 rounded-xl glass-card hover:border-primary/50 transition-all group">
-                    <div className="relative overflow-hidden p-4 rounded-xl border border-primary/20 bg-secondary group-hover:border-primary/50 transition-all">
-                      <Image
-                        src={patternBg}
-                        alt=""
-                        fill
-                        className="object-cover opacity-20"
-                      />
-                      <action.icon className="relative w-6 h-6 text-primary" />
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Button
+            onClick={() => router.push("/donate")}
+            className="py-6 rounded-xl bg-primary text-primary-foreground font-semibold border-0 gold-glow"
+          >
+            <Heart className="w-4 h-4 mr-2" />
+            {lang === "am" ? "ጊዜ ይሰጡ" : "Donate"}
+            <ArrowRight className="w-4 h-4 ml-auto" />
+          </Button>
+
+          <Button
+            onClick={() => router.push("/aserat")}
+            className="py-6 rounded-xl bg-secondary/80 text-foreground font-semibold border border-border/40"
+          >
+            <BookOpen className="w-4 h-4 mr-2" />
+            {lang === "am" ? "አሰሚ ስጦታ" : "Aserat"}
+            <ArrowRight className="w-4 h-4 ml-auto" />
+          </Button>
+
+          <Button
+            onClick={() => router.push("/selet")}
+            className="py-6 rounded-xl bg-secondary/80 text-foreground font-semibold border border-border/40"
+          >
+            <Church className="w-4 h-4 mr-2" />
+            {lang === "am" ? "ጸሎቶች" : "Vows"}
+            <ArrowRight className="w-4 h-4 ml-auto" />
+          </Button>
+
+          <Button
+            onClick={() => router.push("/gbir")}
+            className="py-6 rounded-xl bg-secondary/80 text-foreground font-semibold border border-border/40"
+          >
+            <CreditCard className="w-4 h-4 mr-2" />
+            {lang === "am" ? "ግብር" : "Gbir"}
+            <ArrowRight className="w-4 h-4 ml-auto" />
+          </Button>
+        </div>
+
+        {/* Two Column Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left: Recent Activity */}
+          <div className="lg:col-span-2 space-y-4">
+            <h2 className="text-lg font-heading font-bold text-foreground">
+              {lang === "am" ? "ወሬዎት" : "Recent Activity"}
+            </h2>
+
+            {recentDonations.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-border/40 bg-card/30 p-8 text-center space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  {lang === "am" ? "ገና ምንም ወሬ የሉም" : "No Activity Yet"}
+                </p>
+                <p className="text-xs text-muted-foreground/60">
+                  {lang === "am" ? "ወደ ወደ ማስፈር ይጀምሩ" : "Start making contributions to see activity here."}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {recentDonations.map((tx: any) => (
+                  <div key={tx.id} className="rounded-2xl border border-border/40 bg-card/50 backdrop-blur-sm p-4 flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-foreground text-sm">{tx.type}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(tx.created_at).toLocaleDateString(lang === "am" ? "am-ET" : "en-US")}
+                      </p>
                     </div>
-                    <span className="text-sm font-medium text-foreground">
-                      {action.label}
-                    </span>
-                  </button>
+                    <div className="text-right">
+                      <p className="font-bold text-primary">{Number(tx.amount).toLocaleString()}</p>
+                      <div className="flex items-center gap-1 justify-end">
+                        {tx.status === "verified" ? (
+                          <>
+                            <CheckCircle className="w-3 h-3 text-success" />
+                            <span className="text-xs text-success font-semibold">OK</span>
+                          </>
+                        ) : (
+                          <>
+                            <div className="w-2 h-2 rounded-full bg-primary" />
+                            <span className="text-xs text-primary font-semibold">Pending</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 ))}
               </div>
-            </div>
+            )}
+          </div>
 
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-heading font-semibold text-foreground">
-                  {t("dash.recentActivity")}
-                </h3>
-                <button
-                  onClick={() => router.push("/history")}
-                  className="text-sm text-primary font-medium flex items-center gap-1 hover:underline">
-                  {t("common.viewAll")} <ArrowRight className="w-4 h-4" />
-                </button>
+          {/* Right: Active Vows */}
+          <div className="space-y-4">
+            <h2 className="text-lg font-heading font-bold text-foreground">
+              {lang === "am" ? "ንቁ ጸሎቶች" : "Active Vows"}
+            </h2>
+
+            {selets.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-border/40 bg-card/30 p-6 text-center space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  {lang === "am" ? "ከሥጋ ዲሮ" : "No Vows"}
+                </p>
               </div>
-              <div className="glass-card rounded-xl divide-y divide-border">
-                {recentDonations.length === 0 ? (
-                  <div className="p-6 text-center text-sm text-muted-foreground">
-                    No activity yet. Make your first donation!
-                  </div>
-                ) : (
-                  recentDonations.map((d: any) => (
-                    <div
-                      key={d.id}
-                      className="flex items-center justify-between p-4 hover:bg-secondary/50 transition-colors">
-                      <div>
-                        <p className="font-medium text-foreground">
-                          {d.type} {d.notes ? `- ${d.notes}` : ""}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {new Date(d.created_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-lg font-semibold text-primary">
-                          -{Number(d.amount).toLocaleString()}{" "}
-                          {t("common.birr")}
-                        </span>
-                        <p
-                          className={`text-xs ${d.status === "verified" ? "text-success" : d.status === "rejected" ? "text-destructive" : "text-muted-foreground"}`}>
-                          {d.status}
-                        </p>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-4 mt-6">
-                <h3 className="text-lg font-heading font-semibold text-foreground">
-                  {t("dash.campaigns")}
-                </h3>
-                <button
-                  onClick={() => router.push("/campaigns")}
-                  className="text-sm text-primary font-medium flex items-center gap-1 hover:underline">
-                  {t("common.viewAll")} <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
-
-              <div className="glass-card rounded-xl p-4 space-y-3">
-                {(campaignsWithStatus || []).slice(0, 5).map((c: any) => {
-                  const statusLabel = c.realStatus === "funded" || c.realStatus === "complete" || c.realStatus === "closed" || c.realStatus === "archived"
-                    ? "Complete"
-                    : c.realStatus === "paused"
-                      ? "Paused"
-                      : "Active";
-
-                  const disableDonate = statusLabel !== "Active";
-
+            ) : (
+              <div className="space-y-2">
+                {selets.slice(0, 3).map((vow: any) => {
+                  const percent = Number(vow.total_amount) > 0 ? ((Number(vow.paid_amount) || 0) / Number(vow.total_amount)) * 100 : 0;
                   return (
-                    <div key={c.id} className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium text-foreground">{c.title}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {Number(c.raised_amount).toLocaleString()} / {Number(c.goal_amount).toLocaleString()} {t("common.birr")}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className={`text-xs px-2 py-1 rounded ${statusLabel === "Active" ? "bg-primary/10 text-primary" : statusLabel === "Paused" ? "bg-muted/20 text-muted-foreground" : "bg-success/10 text-success"}`}>
-                          {statusLabel}
-                        </span>
-                        <button
-                          onClick={() => router.push(`/campaigns/${c.id}`)}
-                          disabled={disableDonate}
-                          className={`px-3 py-1 rounded text-sm ${disableDonate ? "bg-muted/20 text-muted-foreground cursor-not-allowed" : "bg-primary text-primary-foreground hover:opacity-90"}`}>
-                          {disableDonate ? t("Closed") || "No more donate" : t("nav.donate")}
-                        </button>
-                      </div>
+                    <div key={vow.id} className="rounded-2xl border border-border/40 bg-card/50 backdrop-blur-sm p-4">
+                      <p className="font-semibold text-foreground text-sm truncate">{vow.title}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {Number(vow.paid_amount || 0).toLocaleString()} / {Number(vow.total_amount).toLocaleString()} ETB
+                      </p>
+                      <Progress value={percent} className="h-1.5 mt-2" />
                     </div>
                   );
                 })}
-
-                {(campaignsWithStatus || []).length === 0 && (
-                  <div className="text-sm text-muted-foreground text-center p-4">No campaigns available</div>
-                )}
               </div>
-            </div>
+            )}
           </div>
+        </div>
 
-          <div>
-            <h3 className="text-lg font-heading font-semibold text-foreground mb-4">
-              {t("dash.reminders")}
-            </h3>
-            <div className="space-y-3">
-              {selets.map((s: any) => (
-                <div
-                  key={s.id}
-                  className="glass-card rounded-xl p-4 flex items-start gap-4">
-                  <Calendar className="w-5 h-5 flex-shrink-0 mt-0.5 text-primary" />
-                  <span className="text-sm text-foreground leading-relaxed">
-                    {s.title}: {Number(s.paid_amount).toLocaleString()}/
-                    {Number(s.total_amount).toLocaleString()} {t("common.birr")}
-                  </span>
-                </div>
-              ))}
-              {selets.length === 0 && (
-                <div className="glass-card rounded-xl p-4 text-sm text-muted-foreground text-center">
-                  No active commitments
-                </div>
-              )}
-            </div>
+        {/* Active Campaigns */}
+        <div className="space-y-4">
+          <h2 className="text-lg font-heading font-bold text-foreground">
+            {lang === "am" ? "ንቁ ቅስቃሴ" : "Active Campaigns"}
+          </h2>
 
-            <div className="mt-6 glass-card rounded-xl p-6 gold-glow">
-              <h4 className="font-heading font-semibold text-foreground mb-4">
-                This Month
-              </h4>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">
-                    Total Given
-                  </span>
-                  <span className="font-semibold text-foreground">
-                    {totalDonated.toLocaleString()} {t("common.birr")}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Pending</span>
-                  <span className="font-semibold text-foreground">
-                    {
-                      donations.filter((d: any) => d.status === "pending")
-                        .length
-                    }
-                  </span>
-                </div>
-              </div>
+          {campaigns.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-border/40 bg-card/30 p-8 text-center space-y-2">
+              <p className="text-sm text-muted-foreground">
+                {lang === "am" ? "ንቁ ቅስቃሴ የሉም" : "No Active Campaigns"}
+              </p>
             </div>
-          </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {campaigns.map((campaign: any) => {
+                const percent = Number(campaign.goal) > 0 ? (Number(campaign.raised) / Number(campaign.goal)) * 100 : 0;
+                return (
+                  <div
+                    key={campaign.id}
+                    onClick={() => router.push(`/donate/${campaign.id}`)}
+                    className="rounded-2xl border border-border/40 bg-card/50 backdrop-blur-sm p-5 hover:bg-card/70 transition-colors cursor-pointer"
+                  >
+                    <h3 className="font-semibold text-foreground text-sm line-clamp-2">{campaign.title}</h3>
+                    <p className="text-xs text-muted-foreground mt-2">{campaign.description?.slice(0, 60)}...</p>
+                    <div className="mt-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-muted-foreground">
+                          {Number(campaign.raised).toLocaleString()} / {Number(campaign.goal).toLocaleString()} ETB
+                        </p>
+                        <span className="text-xs font-bold text-primary">{Math.round(percent)}%</span>
+                      </div>
+                      <Progress value={percent} className="h-2" />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>

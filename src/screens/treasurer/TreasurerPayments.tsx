@@ -7,7 +7,7 @@ import { CheckCircle, XCircle, Clock, Image, Upload, X, Eye } from "lucide-react
 import { toast } from "sonner";
 
 const TreasurerPayments = () => {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [donations, setDonations] = useState<any[]>([]);
   const [filter, setFilter] = useState("pending");
   const [loading, setLoading] = useState(true);
@@ -34,6 +34,25 @@ const TreasurerPayments = () => {
     if (error) { toast.error(error.message); return; }
     toast.success(`Payment ${status}`);
     fetchDonations();
+
+    if (status === "verified" && session?.access_token) {
+      try {
+        const res = await fetch("/api/user/telegram-notify-donation", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ donationId: id }),
+        });
+        if (!res.ok) {
+          const json = await res.json().catch(() => ({}));
+          console.error("Telegram donation notification failed:", json?.error || res.statusText);
+        }
+      } catch (telegramError) {
+        console.error("Telegram donation notification failed:", telegramError);
+      }
+    }
   };
 
   const handleReceiptUpload = async (donationId: string, file: File) => {

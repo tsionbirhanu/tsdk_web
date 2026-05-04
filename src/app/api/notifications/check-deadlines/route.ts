@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+import { escapeTelegramMarkdown, sendTelegramToUser } from "@/lib/telegram";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const DUE_THRESHOLD_MS = 30 * DAY_MS;
@@ -58,6 +59,12 @@ export async function GET(req: NextRequest) {
     const { user, supabase } = userResult;
     const userId = user.id;
 
+    const { data: telegramProfile } = await supabase
+      .from("profiles")
+      .select("full_name, telegram_connected, telegram_chat_id")
+      .eq("user_id", userId)
+      .single();
+
     const now = new Date();
     const results: Record<string, boolean> = {
       aseratDue: false,
@@ -99,6 +106,10 @@ export async function GET(req: NextRequest) {
             "በስር ወር የተረጋገጠ አስራት ክፍያ የተገኘ አይደለም። እባክዎን እርስዎን እንዲያደርጉ ክፍያውን ያቀርቡ።",
           type,
         });
+        await sendTelegramToUser(
+          telegramProfile,
+          `⏰ *Aserat Payment Due*\n\nYour Aserat payment is due. Please submit it to stay up to date, ${escapeTelegramMarkdown(telegramProfile?.full_name || "Member")}.`,
+        );
       }
       results.aseratDue = true;
     }
@@ -135,6 +146,10 @@ export async function GET(req: NextRequest) {
           body_am: `እስካሁን ድረስ ለ${currentYear} የግብር ክፍያ አልከፈላችሁም። እባኮትን የክፍያ ደረሰኝ ያስገቡ።`,
           type,
         });
+        await sendTelegramToUser(
+          telegramProfile,
+          `⏰ *Gbir Payment Due*\n\nYou have not yet made a verified Gbir payment for ${currentYear}. Please submit your receipt, ${escapeTelegramMarkdown(telegramProfile?.full_name || "Member")}.`,
+        );
       }
       results.gbirDue = true;
     }
@@ -179,6 +194,10 @@ export async function GET(req: NextRequest) {
             body_am: "ሰለት ክፍያዎ ይገባል። እባኮትን ክፍያ ያስገቡ።",
             type,
           });
+          await sendTelegramToUser(
+            telegramProfile,
+            `⏰ *Selet Payment Due*\n\nYour Selet installment is due. Please submit a payment to stay on schedule, ${escapeTelegramMarkdown(telegramProfile?.full_name || "Member")}.`,
+          );
         }
         results.seletDue = true;
       }

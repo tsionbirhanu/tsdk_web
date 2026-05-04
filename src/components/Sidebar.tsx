@@ -103,7 +103,7 @@ export default function Sidebar() {
   );
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-60 bg-[#E0C7b7] border-r border-primary/20 flex flex-col z-50">
+    <aside className="fixed left-0 top-0 h-screen w-72 bg-[#E0C7b7] border-r border-primary/20 flex flex-col z-50">
       {/* Logo */}
       <div className="p-5 border-b border-sidebar-border">
         <div className="flex items-center gap-3">

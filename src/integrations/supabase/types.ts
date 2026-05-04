@@ -112,10 +112,13 @@ export type Database = {
           id: string
           is_anonymous: boolean
           notes: string | null
+          raw_response: Json | null
           receipt_url: string | null
+          selet_id: string | null
           status: string
           type: string
           user_id: string
+          tx_ref: string | null
           verified_at: string | null
           verified_by: string | null
         }
@@ -126,10 +129,13 @@ export type Database = {
           id?: string
           is_anonymous?: boolean
           notes?: string | null
+          raw_response?: Json | null
           receipt_url?: string | null
+          selet_id?: string | null
           status?: string
           type?: string
           user_id: string
+          tx_ref?: string | null
           verified_at?: string | null
           verified_by?: string | null
         }
@@ -140,10 +146,13 @@ export type Database = {
           id?: string
           is_anonymous?: boolean
           notes?: string | null
+          raw_response?: Json | null
           receipt_url?: string | null
+          selet_id?: string | null
           status?: string
           type?: string
           user_id?: string
+          tx_ref?: string | null
           verified_at?: string | null
           verified_by?: string | null
         }
@@ -202,6 +211,9 @@ export type Database = {
           id: string
           member_since: number | null
           phone: string | null
+          telegram_chat_id: number | null
+          telegram_connected: boolean
+          telegram_username: string | null
           updated_at: string
           user_id: string
         }
@@ -213,6 +225,9 @@ export type Database = {
           id?: string
           member_since?: number | null
           phone?: string | null
+          telegram_chat_id?: number | null
+          telegram_connected?: boolean
+          telegram_username?: string | null
           updated_at?: string
           user_id: string
         }
@@ -224,6 +239,9 @@ export type Database = {
           id?: string
           member_since?: number | null
           phone?: string | null
+          telegram_chat_id?: number | null
+          telegram_connected?: boolean
+          telegram_username?: string | null
           updated_at?: string
           user_id?: string
         }
