@@ -327,6 +327,10 @@ const ProfilePage = () => {
               <span className="text-sm text-muted-foreground">Member Since</span>
               <span className="text-sm font-medium text-foreground">{profile?.member_since || "â€”"}</span>
             </div>
+            <div className="flex items-center justify-between py-2.5">
+              <span className="text-sm text-muted-foreground">DEBR (Church Branch)</span>
+              <span className="text-sm font-medium text-foreground">{profile?.debr || "-"}</span>
+            </div>
           </div>
         </div>
 

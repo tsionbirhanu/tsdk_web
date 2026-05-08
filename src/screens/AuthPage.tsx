@@ -16,7 +16,21 @@ const AuthPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [debr, setDebr] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const debrOptions = [
+    "St. Mary of Zion Church",
+    "Holy Trinity Cathedral",
+    "Medhane Alem Cathedral",
+    "St. George Church",
+    "Bet Medhane Alem",
+    "Debre Berhan Selassie Church",
+    "Abuna Yemata Guh Church",
+    "Debre Libanos Monastery",
+    "Kidane Mehret Church",
+    "St. Gabriel Church"
+  ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,7 +67,7 @@ const AuthPage = () => {
           email,
           password,
           options: {
-            data: { full_name: fullName },
+            data: { full_name: fullName, debr },
             emailRedirectTo: window.location.origin,
           },
         });
@@ -120,19 +134,46 @@ const AuthPage = () => {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {!isLogin && (
-              <div>
-                <label className="text-sm font-medium text-foreground">
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  required={!isLogin}
-                  className="w-full mt-1 px-4 py-3 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
-                  placeholder="Enter your full name"
-                />
-              </div>
+              <>
+                <div>
+                  <label className="text-sm font-medium text-foreground">
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    required={!isLogin}
+                    className="w-full mt-1 px-4 py-3 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    placeholder="Enter your full name"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-foreground">
+                    DEBR (Church Branch)
+                  </label>
+                  <div className="relative mt-1">
+                    <select
+                      value={debr}
+                      onChange={(e) => setDebr(e.target.value)}
+                      required={!isLogin}
+                      className={`w-full px-4 py-3 pr-10 rounded-xl bg-secondary border border-border focus:outline-none focus:ring-2 focus:ring-primary/40 appearance-none cursor-pointer ${
+                        debr ? "text-foreground" : "text-muted-foreground"
+                      }`}
+                    >
+                      <option value="" className="text-muted-foreground">Select your church branch</option>
+                      {debrOptions.map((option) => (
+                        <option key={option} value={option} className="text-foreground">
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                    <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+              </>
             )}
             <div>
               <label className="text-sm font-medium text-foreground">
