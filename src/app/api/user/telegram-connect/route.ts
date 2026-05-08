@@ -33,9 +33,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    if (!verifyTelegramAuth({ ...telegramData, hash })) {
+    const authData = { ...telegramData, hash };
+    console.log("Telegram auth data received:", { id: authData.id, username: authData.username, hash: hash?.slice(0, 10) + "..." });
+    
+    if (!verifyTelegramAuth(authData)) {
+      console.error("Telegram auth verification failed - hash mismatch");
       return NextResponse.json({ error: "Invalid Telegram auth" }, { status: 401 });
     }
+    console.log("Telegram auth verified successfully");
 
     const telegramChatId = Number(chatId ?? telegramData.id);
     if (!Number.isFinite(telegramChatId)) {
