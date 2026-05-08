@@ -72,12 +72,15 @@ export async function POST(req: NextRequest) {
       : { data: null };
 
     try {
-      await sendTelegramToUser(
+      const notificationSent = await sendTelegramToUser(
         member,
         `💝 *Donation Confirmed!*\n\nAmount: ${Number(donation.amount).toLocaleString()} ETB\nCampaign: ${escapeTelegramMarkdown(campaign?.title || donation.type)}\n\nGod Bless You, ${escapeTelegramMarkdown(member.full_name || "Beloved Member")}!`,
       );
+      if (!notificationSent) {
+        console.error("Telegram donation notification failed: message not sent");
+      }
     } catch (telegramError) {
-      console.error("Telegram donation notification failed:", telegramError);
+      console.error("Telegram donation notification error:", telegramError);
     }
 
     return NextResponse.json({ success: true });

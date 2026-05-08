@@ -17,7 +17,7 @@ export async function sendTelegram(
     const token = process.env.TELEGRAM_BOT_TOKEN;
     if (!token) {
       console.error("TELEGRAM_BOT_TOKEN is not set");
-      return false;
+      throw new Error("TELEGRAM_BOT_TOKEN is not configured");
     }
 
     const response = await fetch(
@@ -36,13 +36,14 @@ export async function sendTelegram(
     if (!response.ok) {
       const body = await response.text();
       console.error("Telegram sendMessage failed:", response.status, body);
-      return false;
+      throw new Error(`Telegram API error: ${response.status} - ${body}`);
     }
 
+    console.log("Telegram message sent successfully to chat:", chatId);
     return true;
   } catch (error) {
     console.error("Telegram sendMessage error:", error);
-    return false;
+    throw error;
   }
 }
 
@@ -77,8 +78,19 @@ export async function sendTelegramToUser(
   user: TelegramProfile,
   message: string,
 ): Promise<boolean> {
-  if (!user?.telegram_connected || !user?.telegram_chat_id) return false;
-  return sendTelegram(user.telegram_chat_id, message);
+  if (!user?.telegram_connected || !user?.telegram_chat_id) {
+    console.warn("User Telegram not connected or missing chat_id", {
+      connected: user?.telegram_connected,
+      chatId: user?.telegram_chat_id,
+    });
+    return false;
+  }
+  try {
+    return await sendTelegram(user.telegram_chat_id, message);
+  } catch (error) {
+    console.error("Failed to send Telegram to user:", error);
+    return false;
+  }
 }
 
 export async function broadcastTelegram(
@@ -93,11 +105,17 @@ export async function broadcastTelegram(
 
   if (error) throw error;
 
+  let successCount = 0;
   for (const member of members || []) {
     if (member.telegram_chat_id) {
-      await sendTelegram(member.telegram_chat_id, message);
+      try {
+        const sent = await sendTelegram(member.telegram_chat_id, message);
+        if (sent) successCount++;
+      } catch (error) {
+        console.error(`Failed to send broadcast to ${member.telegram_chat_id}:`, error);
+      }
     }
   }
 
-  return members?.length || 0;
+  return successCount;
 }
