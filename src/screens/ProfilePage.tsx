@@ -91,6 +91,8 @@ const ProfilePage = () => {
     script.setAttribute("data-size", "large");
     script.setAttribute("data-request-access", "write");
     script.setAttribute("data-onauth", "onTelegramAuth");
+    script.onload = () => console.log("Telegram widget script loaded successfully");
+    script.onerror = () => console.error("Failed to load Telegram widget script");
 
     (window as Window & {
       onTelegramAuth?: (telegramUser: {
@@ -104,6 +106,7 @@ const ProfilePage = () => {
       }) => void;
     }).onTelegramAuth = async (telegramUser) => {
       console.log("=== Telegram auth callback triggered! ===", telegramUser);
+      window.alert("Telegram callback triggered! Check console for details.");
       try {
         if (!session?.access_token) {
           console.error("No access token available");
@@ -145,6 +148,19 @@ const ProfilePage = () => {
 
     container.appendChild(script);
     console.log("Telegram widget script appended to DOM");
+    
+    // Manual test function for debugging
+    (window as any).testTelegramCallback = () => {
+      console.log("Manual test - calling onTelegramAuth with test data");
+      (window as any).onTelegramAuth?.({
+        id: 5956547555,
+        first_name: "Test",
+        username: "chill_sec",
+        auth_date: Math.floor(Date.now() / 1000),
+        hash: "test_hash"
+      });
+    };
+    console.log("Run window.testTelegramCallback() in console to test");
 
     return () => {
       container.innerHTML = "";
