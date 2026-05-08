@@ -73,30 +73,49 @@ const SeletPage = () => {
 
     setSubmitting(true);
     try {
-      // Create donation entry for this Selet payment
-      const { data: donation, error: insertErr } = await supabase.from("donations").insert({
-        user_id: user.id,
-        amount: 0, // Amount will be tracked on the selet, not here
-        type: "selet",
-        status: "pending",
-        notes: method === 'image' ? '(Receipt Image)' : `Ref: ${reference}`,
-      }).select().single();
-      
-      if (insertErr) throw insertErr;
+      // For images: verify FIRST, then create (prevents junk records)
+      // For CBE/Telebirr: create pending, then verify (allows retry)
+      if (method === "image") {
+        const payload = { file: selectedFile };
+        await verifyPayment(method, payload);
+        
+        // Only create donation after successful verification
+        const { error: insertErr } = await supabase.from("donations").insert({
+          user_id: user.id,
+          amount: 0,
+          type: "selet",
+          status: "verified",
+          notes: 'Receipt Image - Auto Verified',
+        });
+        
+        if (insertErr) throw insertErr;
+        toast.success("Receipt verified and recorded successfully!");
+      } else {
+        // CBE/Telebirr: Create pending entry first
+        const { data: donation, error: insertErr } = await supabase.from("donations").insert({
+          user_id: user.id,
+          amount: 0,
+          type: "selet",
+          status: "pending",
+          notes: `Ref: ${reference}`,
+        }).select().single();
+        
+        if (insertErr) throw insertErr;
 
-      // Verify payment
-      const payload: any = method === "image" ? { file: selectedFile } : { reference, suffix: method === "cbe" ? suffix : undefined };
-      await verifyPayment(method, payload);
+        // Call verify API
+        const payload: any = { reference, suffix: method === "cbe" ? suffix : undefined };
+        await verifyPayment(method, payload);
+        
+        // Update to verified
+        const { error: updateErr } = await supabase
+          .from("donations")
+          .update({ status: "verified" })
+          .eq("id", donation.id);
+        
+        if (updateErr) throw updateErr;
+        toast.success("Payment verified successfully!");
+      }
       
-      // Update donation status to verified after successful verification
-      const { error: updateErr } = await supabase
-        .from("donations")
-        .update({ status: "verified" })
-        .eq("id", donation.id);
-      
-      if (updateErr) throw updateErr;
-      
-      toast.success("Payment verified successfully!");
       setReference("");
       setSuffix("");
       setSelectedFile(null);

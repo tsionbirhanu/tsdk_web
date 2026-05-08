@@ -71,10 +71,18 @@ const ProfilePage = () => {
   });
 
   useEffect(() => {
-    if (!user || isLoading || profile?.telegram_connected) return;
+    console.log("Telegram widget useEffect triggered:", { user: !!user, isLoading, connected: profile?.telegram_connected });
+    if (!user || isLoading || profile?.telegram_connected) {
+      console.log("Widget not rendering - conditions not met");
+      return;
+    }
     const container = telegramWidgetRef.current;
-    if (!container) return;
+    if (!container) {
+      console.log("Widget container ref is null");
+      return;
+    }
 
+    console.log("Rendering Telegram widget...");
     container.innerHTML = "";
     const script = document.createElement("script");
     script.src = "https://telegram.org/js/telegram-widget.js";
@@ -95,12 +103,16 @@ const ProfilePage = () => {
         hash: string;
       }) => void;
     }).onTelegramAuth = async (telegramUser) => {
+      console.log("=== Telegram auth callback triggered! ===", telegramUser);
       try {
         if (!session?.access_token) {
+          console.error("No access token available");
           toast.error("Please sign in again");
           return;
         }
 
+        console.log("Sending to API:", { userId: user.id, chatId: telegramUser.id, username: telegramUser.username });
+        
         const response = await fetch("/api/user/telegram-connect", {
           method: "POST",
           headers: {
@@ -115,7 +127,10 @@ const ProfilePage = () => {
           }),
         });
 
+        console.log("API response status:", response.status);
         const json = await response.json().catch(() => ({}));
+        console.log("API response body:", json);
+        
         if (!response.ok) {
           toast.error(json?.error || "Failed to connect Telegram");
           return;
@@ -129,6 +144,7 @@ const ProfilePage = () => {
     };
 
     container.appendChild(script);
+    console.log("Telegram widget script appended to DOM");
 
     return () => {
       container.innerHTML = "";
