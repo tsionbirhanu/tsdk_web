@@ -149,16 +149,17 @@ const ProfilePage = () => {
     container.appendChild(script);
     console.log("Telegram widget script appended to DOM");
     
-    // Manual test function for debugging
-    (window as any).testTelegramCallback = () => {
-      console.log("Manual test - calling onTelegramAuth with test data");
-      (window as any).onTelegramAuth?.({
-        id: 5956547555,
-        first_name: "Test",
-        username: "chill_sec",
-        auth_date: Math.floor(Date.now() / 1000),
-        hash: "test_hash"
-      });
+    // Manual test function with real hash verification
+    (window as any).testTelegramCallback = async () => {
+      console.log("Manual test - fetching valid test data from API");
+      try {
+        const res = await fetch("/api/test/telegram-auth");
+        const testData = await res.json();
+        console.log("Test data received:", testData);
+        (window as any).onTelegramAuth?.(testData);
+      } catch (error) {
+        console.error("Failed to fetch test data:", error);
+      }
     };
     console.log("Run window.testTelegramCallback() in console to test");
 
