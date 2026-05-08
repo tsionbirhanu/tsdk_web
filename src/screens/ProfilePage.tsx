@@ -8,14 +8,14 @@ import { User, Globe, Shield, LogOut, Loader2, Upload, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 
 import crossIcon from "@/assets/cross-icon.jpg";
 
 const ProfilePage = () => {
   const { t, lang, setLang } = useI18n();
-  const { user, signOut } = useAuth();
+  const { user, session, signOut } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
   const [editName, setEditName] = useState(false);
@@ -24,6 +24,7 @@ const ProfilePage = () => {
   const [phoneVal, setPhoneVal] = useState("");
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+  const telegramWidgetRef = useRef<HTMLDivElement>(null);
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ["profile", user?.id],
@@ -46,6 +47,94 @@ const ProfilePage = () => {
     },
     onError: (e: any) => toast.error(e.message),
   });
+
+  const disconnectTelegram = useMutation({
+    mutationFn: async () => {
+      if (!session?.access_token || !user) throw new Error("Unauthorized");
+      const res = await fetch("/api/user/telegram-disconnect", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ userId: user.id }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || "Failed to disconnect Telegram");
+      return json;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["profile", user?.id] });
+      toast.success("Telegram disconnected");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  useEffect(() => {
+    if (!user || isLoading || profile?.telegram_connected) return;
+    const container = telegramWidgetRef.current;
+    if (!container) return;
+
+    container.innerHTML = "";
+    const script = document.createElement("script");
+    script.src = "https://telegram.org/js/telegram-widget.js";
+    script.async = true;
+    script.setAttribute("data-telegram-login", "TsedkNotifyBot");
+    script.setAttribute("data-size", "large");
+    script.setAttribute("data-request-access", "write");
+    script.setAttribute("data-onauth", "onTelegramAuth");
+
+    (window as Window & {
+      onTelegramAuth?: (telegramUser: {
+        id: number;
+        first_name: string;
+        last_name?: string;
+        username?: string;
+        photo_url?: string;
+        auth_date: number;
+        hash: string;
+      }) => void;
+    }).onTelegramAuth = async (telegramUser) => {
+      try {
+        if (!session?.access_token) {
+          toast.error("Please sign in again");
+          return;
+        }
+
+        const response = await fetch("/api/user/telegram-connect", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            userId: user.id,
+            chatId: telegramUser.id,
+            username: telegramUser.username ?? null,
+            ...telegramUser,
+          }),
+        });
+
+        const json = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          toast.error(json?.error || "Failed to connect Telegram");
+          return;
+        }
+
+        window.location.reload();
+      } catch (error) {
+        toast.error("Failed to connect Telegram");
+        console.error("Telegram connect failed:", error);
+      }
+    };
+
+    container.appendChild(script);
+
+    return () => {
+      container.innerHTML = "";
+      delete (window as Window & { onTelegramAuth?: unknown }).onTelegramAuth;
+    };
+  }, [isLoading, profile?.telegram_connected, session?.access_token, user]);
 
   const langOptions: { value: Language; label: string }[] = [
     { value: "en", label: "English" },
@@ -160,6 +249,41 @@ const ProfilePage = () => {
           </div>
         </div>
 
+        <div className="glass-card rounded-xl p-4">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div>
+              <h3 className="text-sm font-heading font-semibold text-foreground">Telegram Notifications</h3>
+              <p className="text-xs text-muted-foreground">Connect your Telegram account to get portal updates.</p>
+            </div>
+          </div>
+          {isLoading ? (
+            <p className="text-sm text-muted-foreground">Loading Telegram status...</p>
+          ) : profile?.telegram_connected ? (
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-secondary/50 px-4 py-3">
+              <span className="text-sm font-medium text-foreground">
+                ✅ Telegram Connected {profile.telegram_username ? `— @${profile.telegram_username}` : ""}
+              </span>
+              <button
+                onClick={() => disconnectTelegram.mutate()}
+                disabled={disconnectTelegram.isPending}
+                className="rounded-lg border border-destructive/30 px-3 py-2 text-xs font-medium text-destructive disabled:opacity-50"
+              >
+                {disconnectTelegram.isPending ? "Disconnecting..." : "Disconnect"}
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div
+                ref={telegramWidgetRef}
+                className="flex justify-start"
+              />
+              <p className="text-xs text-muted-foreground">
+                Use the Telegram widget to link your account for donation and campaign alerts.
+              </p>
+            </div>
+          )}
+        </div>
+
         {/* Personal Info */}
         <div className="glass-card rounded-xl p-4">
           <div className="flex items-center gap-2 mb-3">
@@ -202,6 +326,10 @@ const ProfilePage = () => {
             <div className="flex items-center justify-between py-2.5">
               <span className="text-sm text-muted-foreground">Member Since</span>
               <span className="text-sm font-medium text-foreground">{profile?.member_since || "â€”"}</span>
+            </div>
+            <div className="flex items-center justify-between py-2.5">
+              <span className="text-sm text-muted-foreground">DEBR (Church Branch)</span>
+              <span className="text-sm font-medium text-foreground">{profile?.debr || "-"}</span>
             </div>
           </div>
         </div>

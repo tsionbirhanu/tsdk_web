@@ -4,8 +4,10 @@ import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Plus, Edit, Trash2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 
 const AdminCampaigns = () => {
+  const { session } = useAuth();
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -55,15 +57,19 @@ const AdminCampaigns = () => {
         imageUrl = urlData.publicUrl;
       }
 
-      const { error } = await supabase.from("campaigns").insert({
-        title: form.title,
-        title_am: form.title_am || null,
-        title_om: form.title_om || null,
-        description: form.description || null,
-        category: form.category,
-        goal_amount: Number(form.goal_amount) || 0,
-        image_url: imageUrl,
-      });
+      const { data: createdCampaign, error } = await supabase
+        .from("campaigns")
+        .insert({
+          title: form.title,
+          title_am: form.title_am || null,
+          title_om: form.title_om || null,
+          description: form.description || null,
+          category: form.category,
+          goal_amount: Number(form.goal_amount) || 0,
+          image_url: imageUrl,
+        })
+        .select("id")
+        .single();
 
       if (error) { toast.error(error.message); return; }
       toast.success("Campaign created");
@@ -72,6 +78,25 @@ const AdminCampaigns = () => {
       setImageFile(null);
       setImagePreview(null);
       fetchCampaigns();
+
+      if (createdCampaign?.id && session?.access_token) {
+        try {
+          const res = await fetch("/api/user/telegram-notify-campaign", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ campaignId: createdCampaign.id }),
+          });
+          if (!res.ok) {
+            const json = await res.json().catch(() => ({}));
+            console.error("Telegram campaign notification failed:", json?.error || res.statusText);
+          }
+        } catch (telegramError) {
+          console.error("Telegram campaign notification failed:", telegramError);
+        }
+      }
     } catch (err: any) {
       toast.error(err.message);
     } finally {

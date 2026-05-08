@@ -41,7 +41,7 @@ export default function DashboardLayout({
   return (
     <div className={`min-h-screen bg-background flex ${isEthiopianTheme ? 'ethiopian-theme' : ''}`}>
       <Sidebar />
-      <div className="flex-1 flex flex-col ml-60">
+      <div className="flex-1 flex flex-col ml-72">
         <TopHeader />
         <main className="flex-1 overflow-auto">{children}</main>
       </div>
