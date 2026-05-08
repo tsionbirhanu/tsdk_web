@@ -13,7 +13,11 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { userId, chatId, username, hash, ...telegramData } = body ?? {};
+    const { userId, username, hash, ...telegramData } = body ?? {};
+
+    if (!telegramData?.id) {
+      return NextResponse.json({ error: "Missing Telegram ID" }, { status: 400 });
+    }
 
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -35,16 +39,16 @@ export async function POST(req: NextRequest) {
 
     const authData = { ...telegramData, hash };
     console.log("Telegram auth data received:", { id: authData.id, username: authData.username, hash: hash?.slice(0, 10) + "..." });
-    
+
     if (!verifyTelegramAuth(authData)) {
       console.error("Telegram auth verification failed - hash mismatch");
       return NextResponse.json({ error: "Invalid Telegram auth" }, { status: 401 });
     }
     console.log("Telegram auth verified successfully");
 
-    const telegramChatId = Number(chatId ?? telegramData.id);
+    const telegramChatId = Number(telegramData.id);
     if (!Number.isFinite(telegramChatId)) {
-      return NextResponse.json({ error: "Invalid chatId" }, { status: 400 });
+      return NextResponse.json({ error: "Invalid Telegram ID format" }, { status: 400 });
     }
 
     const { error: updateError } = await supabase
